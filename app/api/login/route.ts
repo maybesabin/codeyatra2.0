@@ -8,7 +8,6 @@ import jwt from "jsonwebtoken"
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-    
     try {
         await connectToDb()
         const { email, password } = await req.json();
@@ -19,7 +18,7 @@ export async function POST(req: Request) {
         if (!isMatch) return errorResponse("Wrong credentials")
 
         const token = jwt.sign(
-            { id: user._id, email: user.email },
+            { id: user._id, email: user.email, role: "user" },
             process.env.JWT_SECRET!,
             { expiresIn: "7d" }
         )

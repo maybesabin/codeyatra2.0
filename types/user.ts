@@ -1,3 +1,4 @@
+import type { Schema } from "mongoose";
 import { Member } from "./member";
 
 export interface UserType {
@@ -11,5 +12,6 @@ export interface UserType {
     verify: boolean;
     age: number;
     member?: [Member];
-    isAdmin: boolean
+    appointments?: Schema.Types.ObjectId[];
+    isAdmin: boolean;
 }

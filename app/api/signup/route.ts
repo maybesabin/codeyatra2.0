@@ -6,9 +6,15 @@ import User from "@/models/User";
 
 export async function POST(req: Request) {
     try {
+<<<<<<< HEAD
+        const { name, email, password, gender, age, profilePicture } = await req.json();
+
+        if (!name || !email || !password || !gender || !age
+=======
         const { name, email, password, gender, citizenship, age } = await req.json();
 
         if (!name || !email || !password || !gender || !citizenship || !age
+>>>>>>> a1a6020fa478937e71644570e20bf088ee80ede9
         ) {
             return errorResponse("Missing required fields");
         }
@@ -27,10 +33,16 @@ export async function POST(req: Request) {
             email,
             password: hashedPassword,
             verify: false,
+<<<<<<< HEAD
+            gender,
+            age,
+            profilePicture
+=======
             citizenship,
             gender,
             age,
             profilePicture: "https://www.istockphoto.com/illustrations/penguin"
+>>>>>>> a1a6020fa478937e71644570e20bf088ee80ede9
         });
 
         await newUser.save();

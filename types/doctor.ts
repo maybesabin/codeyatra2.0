@@ -1,16 +1,18 @@
-import { UserType } from "./user";
+import type { Schema } from "mongoose";
 
-export interface Doctor {
+export interface DoctorType {
     email: string,
     password: string,
     name: string,
     age: number,
     profilePicture: string,
-    citizenship: string,
-    license: string,
+    citizenship?: string,
+    license?: string,
     gender: "male" | "female" | "others",
     verify: boolean,
     available: boolean,
-    appointments: [UserType],
+    appointments: Schema.Types.ObjectId[],
     isAdmin: boolean;
 }
+
+export type Doctor = DoctorType;
