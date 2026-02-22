@@ -12,6 +12,11 @@ const AppointmentSchema = new Schema<AppointmentType>({
         ref: "User",
         required: true,
     },
+    member: {
+        type: Schema.Types.ObjectId,
+        ref: "Member",
+        required: false,
+    },
     problem: {
         type: String,
         required: true,

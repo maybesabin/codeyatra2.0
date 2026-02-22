@@ -1,12 +1,18 @@
-import React, { useState } from "react";
+"use client";
 
-type Status = "confirmed" | "pending" | "rejected" | "completed";
+import React, { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { Loader2, Check, X } from "lucide-react";
+import { toast } from "sonner";
+
+type Status = "pending" | "completed" | "cancelled";
 
 interface Appointment {
   id: string;
   user: string;
   age: number;
-  gender: "M" | "F";
+  gender: "M" | "F" | "O";
   problem: string;
   bookedOn: string;
   date: string;
@@ -14,42 +20,10 @@ interface Appointment {
   avatar: string;
 }
 
-const APPOINTMENTS: Appointment[] = [
-  {
-    id: "A001",
-    user: "Priya Sharma",
-    age: 34,
-    gender: "F",
-    problem: "Hypertension follow-up",
-    bookedOn: "2025-02-18T09:14:00",
-    date: "2025-02-22T10:00:00",
-    status: "confirmed",
-    avatar: "PS",
-  },
-  {
-    id: "A002",
-    user: "Arjun Mehta",
-    age: 52,
-    gender: "M",
-    problem: "Type 2 Diabetes checkup",
-    bookedOn: "2025-02-17T14:30:00",
-    date: "2025-02-22T11:30:00",
-    status: "completed",
-    avatar: "AM",
-  },
-  {
-    id: "A003",
-    user: "Neha Gupta",
-    age: 28,
-    gender: "F",
-    problem: "Migraine consultation",
-    bookedOn: "2025-02-19T11:00:00",
-    date: "2025-02-23T09:00:00",
-    status: "rejected",
-
-    avatar: "NG",
-  },
-];
+function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("token");
+}
 
 const fmt = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString("en-IN", {
@@ -76,10 +50,9 @@ const avatarColor = (id: string) => {
 
 const Badge = ({ status }: { status: Status }) => {
   const statusMap: Record<Status, string> = {
-    confirmed: "bg-green-100 text-green-700",
     pending: "bg-yellow-100 text-yellow-700",
-    rejected: "bg-red-100 text-red-700",
     completed: "bg-blue-100 text-blue-700",
+    cancelled: "bg-red-100 text-red-700",
   };
   return (
     <span
@@ -115,11 +88,75 @@ const DetailModal = ({
 };
 
 export default function DoctorDashboard() {
+  const router = useRouter();
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [counts, setCounts] = useState({
+    total: 0,
+    pending: 0,
+    completed: 0,
+    cancelled: 0,
+  });
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Status | "all">("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Appointment | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const filtered = APPOINTMENTS.filter((a) => {
+  const fetchAppointments = useCallback(async () => {
+    const token = getToken();
+    if (!token) {
+      router.replace("/doctor/login");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data } = await axios.get<{
+        success: boolean;
+        appointments: Appointment[];
+        counts: { total: number; pending: number; completed: number; cancelled: number };
+      }>("/api/doctor/appointments", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data.success && data.appointments) {
+        setAppointments(data.appointments);
+        if (data.counts) setCounts(data.counts);
+      } else {
+        setAppointments([]);
+      }
+    } catch {
+      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    fetchAppointments();
+  }, [fetchAppointments]);
+
+  const handleStatusUpdate = async (apptId: string, newStatus: "completed" | "cancelled") => {
+    const token = getToken();
+    if (!token) return;
+    setUpdatingId(apptId);
+    try {
+      await axios.patch(
+        `/api/doctor/appointments/${apptId}`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(newStatus === "completed" ? "Appointment approved" : "Appointment cancelled");
+      fetchAppointments();
+    } catch (err) {
+      const msg = axios.isAxiosError(err) && err.response?.data?.message
+        ? String(err.response.data.message)
+        : "Update failed";
+      toast.error(msg);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const filtered = appointments.filter((a) => {
     const matchStatus = filter === "all" || a.status === filter;
     const matchSearch =
       a.user.toLowerCase().includes(search.toLowerCase()) ||
@@ -127,18 +164,17 @@ export default function DoctorDashboard() {
     return matchStatus && matchSearch;
   });
 
-  const counts = {
-    all: APPOINTMENTS.length,
-    confirmed: APPOINTMENTS.filter((a) => a.status === "confirmed").length,
-    pending: APPOINTMENTS.filter((a) => a.status === "pending").length,
-    rejected: APPOINTMENTS.filter((a) => a.status === "rejected").length,
-    completed: APPOINTMENTS.filter((a) => a.status === "completed").length,
+  const displayCounts = {
+    all: counts.total,
+    pending: counts.pending,
+    completed: counts.completed,
+    cancelled: counts.cancelled,
   };
 
   return (
     <div className="min-h-screen bg-stone-50 font-sans p-6">
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold">Paitents</h1>
+        <h1 className="text-2xl font-semibold">Patients</h1>
       </header>
 
       {/* Controls */}
@@ -152,9 +188,7 @@ export default function DoctorDashboard() {
         />
 
         <div className="flex gap-1 bg-white border border-stone-200 rounded-xl p-1">
-          {(
-            ["all", "confirmed", "pending", "rejected", "completed"] as const
-          ).map((s) => (
+          {(["all", "pending", "completed", "cancelled"] as const).map((s) => (
             <button
               key={s}
               onClick={() => setFilter(s)}
@@ -164,7 +198,9 @@ export default function DoctorDashboard() {
                   : "text-stone-500 hover:text-stone-700"
               }`}
             >
-              {s === "all" ? `All (${counts.all})` : `${s} (${counts[s]})`}
+              {s === "all"
+                ? `All (${displayCounts.all})`
+                : `${s} (${displayCounts[s]})`}
             </button>
           ))}
         </div>
@@ -172,7 +208,12 @@ export default function DoctorDashboard() {
 
       {/* Table */}
       <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="py-20 flex items-center justify-center gap-2 text-stone-500">
+            <Loader2 className="w-6 h-6 animate-spin" />
+            <span>Loading appointments…</span>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="py-20 text-center text-stone-400 text-sm">
             No appointments match your search.
           </div>
@@ -185,7 +226,7 @@ export default function DoctorDashboard() {
                 <th className="px-5 py-3 text-left">Booked On</th>
                 <th className="px-5 py-3 text-left">Scheduled For</th>
                 <th className="px-5 py-3 text-left">Status</th>
-                <th className="px-5 py-3"></th>
+                <th className="px-5 py-3 text-left">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -199,18 +240,20 @@ export default function DoctorDashboard() {
                     <div className="flex items-center gap-3">
                       <div
                         className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${avatarColor(
-                          appt.id,
+                          appt.id
                         )}`}
                       >
                         {appt.avatar}
                       </div>
                       <div>
-                        <p className="font-medium text-stone-800">
-                          {appt.user}
-                        </p>
+                        <p className="font-medium text-stone-800">{appt.user}</p>
                         <p className="text-stone-400 text-xs">
                           {appt.age} yrs ·{" "}
-                          {appt.gender === "M" ? "Male" : "Female"}
+                          {appt.gender === "M"
+                            ? "Male"
+                            : appt.gender === "F"
+                              ? "Female"
+                              : "Other"}
                         </p>
                       </div>
                     </div>
@@ -234,22 +277,35 @@ export default function DoctorDashboard() {
                     <Badge status={appt.status} />
                   </td>
 
-                  <td className="px-5 py-4">
-                    <button className="text-stone-400 hover:text-primary transition">
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </button>
+                  <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                    {appt.status === "pending" ? (
+                      <div className="flex gap-1.5 flex-wrap">
+                        <button
+                          type="button"
+                          disabled={updatingId === appt.id}
+                          onClick={() => handleStatusUpdate(appt.id, "completed")}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50"
+                        >
+                          {updatingId === appt.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Check className="w-3 h-3" />
+                          )}
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          disabled={updatingId === appt.id}
+                          onClick={() => handleStatusUpdate(appt.id, "cancelled")}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50"
+                        >
+                          <X className="w-3 h-3" />
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-stone-400 text-xs">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
