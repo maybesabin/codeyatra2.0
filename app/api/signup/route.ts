@@ -6,9 +6,9 @@ import { handleError } from "@/utils/error";
 
 export async function POST(req: Request) {
     try {
-        const { name, email, password, gender, familyMembers } = await req.json();
+        const { name, email, password, gender, familyMembers, familyName } = await req.json();
 
-        if (!name || !email || !password || !gender) {
+        if (!name || !email || !password || !gender || !familyName) {
             return errorResponse("Missing required fields");
         }
 
@@ -26,6 +26,7 @@ export async function POST(req: Request) {
             email,
             password: hashedPassword,
             gender,
+            familyName,
             familyMembers: familyMembers || [],
         });
 

@@ -1,20 +1,15 @@
 import { UserType } from "@/types/user";
 import mongoose, { Schema } from "mongoose";
 
-const UserSchema = new Schema<UserType>({
+const MemberSchema = new Schema<UserType>({
     name: {
         type: String,
         required: true,
     },
-    email: {
-        type: String,
+    isAdmin: {
+        type: Boolean,
         required: true,
-        minLength: [10, "Email should be at least 10 characters"],
-        unique: true
-    },
-    password: {
-        type: String,
-        required: true,
+        default: false
     },
     verify: {
         type: Boolean,
@@ -22,11 +17,6 @@ const UserSchema = new Schema<UserType>({
     },
     citizenship: {
         type: String
-    },
-    isAdmin: {
-        type: Boolean,
-        required: true,
-        default: false
     },
     gender: {
         type: String,
@@ -43,21 +33,15 @@ const UserSchema = new Schema<UserType>({
         type: String,
         required: true
     },
-    member: [
-        {
-            type: mongoose.Types.ObjectId,
-            ref: "Member"
-        }
-    ]
 
 }, {
     timestamps: true
 })
 
-if (mongoose.models.User) {
-    delete mongoose.models.User;
+if (mongoose.models.Member) {
+    delete mongoose.models.Member;
 }
 
-const User = mongoose.model("User", UserSchema);
+const User = mongoose.model("User", MemberSchema);
 
 export default User

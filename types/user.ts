@@ -1,10 +1,15 @@
-import { Document, Types } from "mongoose";
+import { Member } from "./member";
 
-export interface UserType extends Document {
+export interface UserType {
     name: string;
     email: string;
     password: string;
+    profilePicture: string;
     gender: "male" | "female" | "other";
-    familyMembers: Types.DocumentArray<FamilyMember>;
-    familyName: string;
+    citizenship: string;
+    problem: string;
+    verify: boolean;
+    age: number;
+    member?: [Member];
+    isAdmin: boolean
 }
