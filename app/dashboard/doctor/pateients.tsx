@@ -4,54 +4,49 @@ type Status = "confirmed" | "pending" | "rejected" | "completed";
 
 interface Appointment {
   id: string;
-  patient: string;
+  user: string;
   age: number;
   gender: "M" | "F";
-  condition: string;
+  problem: string;
   bookedOn: string;
-  scheduledFor: string;
+  date: string;
   status: Status;
-  rejectionReason?: string;
-  notes?: string;
   avatar: string;
 }
 
 const APPOINTMENTS: Appointment[] = [
   {
     id: "A001",
-    patient: "Priya Sharma",
+    user: "Priya Sharma",
     age: 34,
     gender: "F",
-    condition: "Hypertension follow-up",
+    problem: "Hypertension follow-up",
     bookedOn: "2025-02-18T09:14:00",
-    scheduledFor: "2025-02-22T10:00:00",
+    date: "2025-02-22T10:00:00",
     status: "confirmed",
-    notes: "BP readings trending high. Medication review needed.",
     avatar: "PS",
   },
   {
     id: "A002",
-    patient: "Arjun Mehta",
+    user: "Arjun Mehta",
     age: 52,
     gender: "M",
-    condition: "Type 2 Diabetes checkup",
+    problem: "Type 2 Diabetes checkup",
     bookedOn: "2025-02-17T14:30:00",
-    scheduledFor: "2025-02-22T11:30:00",
+    date: "2025-02-22T11:30:00",
     status: "completed",
-    notes: "HbA1c stable. Continue current regimen.",
     avatar: "AM",
   },
   {
     id: "A003",
-    patient: "Neha Gupta",
+    user: "Neha Gupta",
     age: 28,
     gender: "F",
-    condition: "Migraine consultation",
+    problem: "Migraine consultation",
     bookedOn: "2025-02-19T11:00:00",
-    scheduledFor: "2025-02-23T09:00:00",
+    date: "2025-02-23T09:00:00",
     status: "rejected",
-    rejectionReason:
-      "Slot unavailable — doctor on leave. Rescheduled for next week.",
+
     avatar: "NG",
   },
 ];
@@ -105,14 +100,12 @@ const DetailModal = ({
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl p-6 w-96">
-        <h2 className="font-semibold text-lg mb-2">{appt.patient}</h2>
-        <p>{appt.condition}</p>
-        <p className="mt-2 text-sm text-stone-400">
-          Notes: {appt.notes || "—"}
-        </p>
+        <h2 className="font-semibold text-lg mb-2">{appt.user}</h2>
+        <p>{appt.problem}</p>
+
         <button
           onClick={onClose}
-          className="mt-4 px-3 py-1 bg-teal-600 text-white rounded-lg"
+          className="mt-4 px-3 py-1 bg-primary text-white rounded-lg"
         >
           Close
         </button>
@@ -129,8 +122,8 @@ export default function DoctorDashboard() {
   const filtered = APPOINTMENTS.filter((a) => {
     const matchStatus = filter === "all" || a.status === filter;
     const matchSearch =
-      a.patient.toLowerCase().includes(search.toLowerCase()) ||
-      a.condition.toLowerCase().includes(search.toLowerCase());
+      a.user.toLowerCase().includes(search.toLowerCase()) ||
+      a.problem.toLowerCase().includes(search.toLowerCase());
     return matchStatus && matchSearch;
   });
 
@@ -145,15 +138,7 @@ export default function DoctorDashboard() {
   return (
     <div className="min-h-screen bg-stone-50 font-sans p-6">
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold">Appointments</h1>
-        <p className="text-sm text-stone-400">
-          {new Date().toLocaleDateString("en-IN", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
-        </p>
+        <h1 className="text-2xl font-semibold">Paitents</h1>
       </header>
 
       {/* Controls */}
@@ -163,7 +148,7 @@ export default function DoctorDashboard() {
           placeholder="Search patient or condition…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 rounded-xl border border-stone-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          className="flex-1 rounded-xl border border-stone-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary"
         />
 
         <div className="flex gap-1 bg-white border border-stone-200 rounded-xl p-1">
@@ -173,9 +158,9 @@ export default function DoctorDashboard() {
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition capitalize ${
+              className={`px-3 py-1.5 cursor-pointer rounded-lg text-xs font-medium transition capitalize ${
                 filter === s
-                  ? "bg-stone-800 text-white shadow-sm"
+                  ? "bg-primary text-white  shadow-sm"
                   : "text-stone-500 hover:text-stone-700"
               }`}
             >
@@ -200,7 +185,6 @@ export default function DoctorDashboard() {
                 <th className="px-5 py-3 text-left">Booked On</th>
                 <th className="px-5 py-3 text-left">Scheduled For</th>
                 <th className="px-5 py-3 text-left">Status</th>
-                <th className="px-5 py-3 text-left">Rejection Reason</th>
                 <th className="px-5 py-3"></th>
               </tr>
             </thead>
@@ -222,7 +206,7 @@ export default function DoctorDashboard() {
                       </div>
                       <div>
                         <p className="font-medium text-stone-800">
-                          {appt.patient}
+                          {appt.user}
                         </p>
                         <p className="text-stone-400 text-xs">
                           {appt.age} yrs ·{" "}
@@ -232,7 +216,7 @@ export default function DoctorDashboard() {
                     </div>
                   </td>
                   <td className="px-5 py-4 text-stone-600 max-w-[160px] truncate">
-                    {appt.condition}
+                    {appt.problem}
                   </td>
                   <td className="px-5 py-4">
                     <p className="text-stone-700">{fmt(appt.bookedOn)}</p>
@@ -241,25 +225,17 @@ export default function DoctorDashboard() {
                     </p>
                   </td>
                   <td className="px-5 py-4">
-                    <p className="text-stone-700">{fmt(appt.scheduledFor)}</p>
+                    <p className="text-stone-700">{fmt(appt.date)}</p>
                     <p className="text-stone-400 text-xs">
-                      {fmtTime(appt.scheduledFor)}
+                      {fmtTime(appt.date)}
                     </p>
                   </td>
                   <td className="px-5 py-4">
                     <Badge status={appt.status} />
                   </td>
-                  <td className="px-5 py-4 max-w-[200px] truncate">
-                    {appt.rejectionReason ? (
-                      <span className="text-red-500 text-xs">
-                        {appt.rejectionReason}
-                      </span>
-                    ) : (
-                      <span className="text-stone-300 text-xs">—</span>
-                    )}
-                  </td>
+
                   <td className="px-5 py-4">
-                    <button className="text-stone-400 hover:text-teal-600 transition">
+                    <button className="text-stone-400 hover:text-primary transition">
                       <svg
                         className="w-4 h-4"
                         fill="none"
@@ -281,11 +257,6 @@ export default function DoctorDashboard() {
           </table>
         )}
       </div>
-
-      <p className="text-center text-xs text-stone-300 mt-6">
-        Showing {filtered.length} of {APPOINTMENTS.length} appointments ·
-        MediDesk v1.0
-      </p>
 
       {selected && (
         <DetailModal appt={selected} onClose={() => setSelected(null)} />
