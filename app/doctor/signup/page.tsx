@@ -36,18 +36,26 @@ const page = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      const ageNum = Number(formData.age);
+      if (Number.isNaN(ageNum) || ageNum < 1 || ageNum > 150) {
+        toast.error('Age must be a number between 1 and 150');
+        setLoading(false);
+        return;
+      }
       const payload = {
         profilePicture: formData.profilePicture,
         name: formData.name,
         email: formData.email,
         password: formData.password,
         gender: formData.gender,
-        age: formData.age,
+        age: ageNum,
       };
-      const { data } = await axios.post<{ message?: string }>('/api/signup', payload);
+      const { data } = await axios.post<{ message?: string }>(
+        '/api/doctor/signup',
+        payload
+      );
       toast.success(data.message ?? 'Account created successfully');
-      router.push('/login');
-      console.log(formData);
+      router.push('/doctor/login');
     } catch (err: unknown) {
       const message =
         axios.isAxiosError(err) && err.response?.data?.message
@@ -64,12 +72,10 @@ const page = () => {
       <div className="w-full max-w-sm px-6">
         <div className="text-center mb-8">
           <div className="inline-block mb-4 px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full">
-            Create Account
+            Doctor Sign Up
           </div>
           <h1 className="text-5xl font-bold text-primary mb-2">Sign Up</h1>
         </div>
-
-
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
@@ -141,7 +147,7 @@ const page = () => {
             <SelectContent>
               <SelectItem value="male">Male</SelectItem>
               <SelectItem value="female">Female</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+              <SelectItem value="others">Other</SelectItem>
             </SelectContent>
           </Select>
 
@@ -178,10 +184,17 @@ const page = () => {
 
         <p className="text-center text-sm">
           Already have an account?{' '}
-          <Link href="/login" className="text-primary hover:underline font-medium">
+          <Link href="/doctor/login" className="text-primary hover:underline font-medium">
             Log in
           </Link>
         </p>
+
+        <div className="mt-6 pt-6 border-t text-center">
+          <p className="text-xs text-muted-foreground mb-2">Are you a patient?</p>
+          <Link href="/signup" className="text-primary hover:underline font-medium text-sm">
+            User Sign Up
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -1,15 +1,8 @@
 'use client';
 
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useState } from 'react';
-import { User, Mail, Lock, Eye, EyeOff, UserPen, Loader2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -17,14 +10,7 @@ import { toast } from 'sonner';
 
 const page = () => {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    gender: '',
-    age: '',
-    profilePicture: '',
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -36,23 +22,17 @@ const page = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const payload = {
-        profilePicture: formData.profilePicture,
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        gender: formData.gender,
-        age: formData.age,
-      };
-      const { data } = await axios.post<{ message?: string }>('/api/signup', payload);
-      toast.success(data.message ?? 'Account created successfully');
-      router.push('/login');
-      console.log(formData);
+      const { data } = await axios.post<{ message: string; token: string }>(
+        '/api/doctor/login',
+        formData
+      );
+      toast.success(data.message ?? 'Logged in successfully');
+      router.push('/dashboard/doctor');
     } catch (err: unknown) {
       const message =
         axios.isAxiosError(err) && err.response?.data?.message
           ? String(err.response.data.message)
-          : 'Sign up failed. Please try again.';
+          : 'Login failed. Please try again.';
       toast.error(message);
     } finally {
       setLoading(false);
@@ -64,38 +44,12 @@ const page = () => {
       <div className="w-full max-w-sm px-6">
         <div className="text-center mb-8">
           <div className="inline-block mb-4 px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full">
-            Create Account
+            Doctor Login
           </div>
-          <h1 className="text-5xl font-bold text-primary mb-2">Sign Up</h1>
+          <h1 className="text-5xl font-bold text-primary mb-2">Log In</h1>
         </div>
 
-
-
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="text"
-              name="profilePicture"
-              value={formData.profilePicture}
-              onChange={handleChange}
-              placeholder="Profile Picture Url"
-              className="pl-10 py-6"
-            />
-          </div>
-
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Full Name"
-              className="pl-10 py-6"
-            />
-          </div>
-
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
@@ -131,33 +85,6 @@ const page = () => {
             </button>
           </div>
 
-          <Select
-            value={formData.gender}
-            onValueChange={(value) => setFormData({ ...formData, gender: value })}
-          >
-            <SelectTrigger className="w-full h-12 py-6">
-              <SelectValue placeholder="Gender" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="male">Male</SelectItem>
-              <SelectItem value="female">Female</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div className="relative">
-            <UserPen className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="text"
-              name="age"
-              inputMode="numeric"
-              value={formData.age}
-              onChange={handleChange}
-              placeholder="Age"
-              className="pl-10 py-6"
-            />
-          </div>
-
           <button
             type="submit"
             disabled={loading}
@@ -166,10 +93,10 @@ const page = () => {
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Signing up...
+                Logging in...
               </>
             ) : (
-              'Sign Up'
+              'Log In'
             )}
           </button>
         </form>
@@ -177,11 +104,18 @@ const page = () => {
         <div className="my-6 border-t" />
 
         <p className="text-center text-sm">
-          Already have an account?{' '}
-          <Link href="/login" className="text-primary hover:underline font-medium">
-            Log in
+          Don&apos;t have an account?{' '}
+          <Link href="/doctor/signup" className="text-primary hover:underline font-medium">
+            Sign up
           </Link>
         </p>
+
+        <div className="mt-6 pt-6 border-t text-center">
+          <p className="text-xs text-muted-foreground mb-2">Are you a patient?</p>
+          <Link href="/login" className="text-primary hover:underline font-medium text-sm">
+            User Login
+          </Link>
+        </div>
       </div>
     </div>
   );
