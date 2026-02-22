@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { doctorId, problem, date } = body;
+        const { doctorId, problem, date, memberId } = body;
 
         if (!doctorId || !problem || !date) {
             return errorResponse("Missing required fields: doctorId, problem, date");
@@ -57,6 +57,13 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        if (memberId) {
+            const memberIds = (user.member ?? []).map((id) => String(id));
+            if (!memberIds.includes(String(memberId))) {
+                return errorResponse("Invalid family member");
+            }
+        }
+
         const doctor = await Doctor.findById(doctorId);
         if (!doctor) {
             return errorResponse("Doctor not found");
@@ -71,6 +78,7 @@ export async function POST(req: NextRequest) {
         const appointment = new Appointment({
             doctor: doctorId,
             user: userId,
+            ...(memberId && { member: memberId }),
             problem,
             date: appointmentDate,
             status: "pending",

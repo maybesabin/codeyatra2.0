@@ -26,6 +26,10 @@ const page = () => {
         '/api/doctor/login',
         formData
       );
+      if (data.token) {
+        typeof window !== 'undefined' && localStorage.setItem('token', data.token);
+        typeof window !== 'undefined' && localStorage.setItem('role', 'doctor');
+      }
       toast.success(data.message ?? 'Logged in successfully');
       router.push('/dashboard/doctor');
     } catch (err: unknown) {

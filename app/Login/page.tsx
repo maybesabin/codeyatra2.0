@@ -23,6 +23,10 @@ const page = () => {
     setLoading(true);
     try {
       const { data } = await axios.post<{ message: string; token: string }>('/api/login', formData);
+      if (data.token) {
+        typeof window !== 'undefined' && localStorage.setItem('token', data.token);
+        typeof window !== 'undefined' && localStorage.setItem('role', 'user');
+      }
       toast.success(data.message ?? 'Logged in successfully');
       router.push('/dashboard/user');
     } catch (err: unknown) {

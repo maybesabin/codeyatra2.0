@@ -42,6 +42,6 @@ if (mongoose.models.Member) {
     delete mongoose.models.Member;
 }
 
-const User = mongoose.model("User", MemberSchema);
+const Member = mongoose.model("Member", MemberSchema);
 
-export default User
+export default Member;
