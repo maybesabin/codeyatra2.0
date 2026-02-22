@@ -1,14 +1,15 @@
 import bcrypt from "bcrypt";
-import { User } from "@/models/User";
 import connectToDb from "../../../utils/db";
 import { errorResponse, successResponse } from "@/utils/response";
 import { handleError } from "@/utils/error";
+import User from "@/models/User";
 
 export async function POST(req: Request) {
     try {
-        const { name, email, password, gender, familyMembers, familyName } = await req.json();
+        const { name, email, password, gender, citizenship, age } = await req.json();
 
-        if (!name || !email || !password || !gender || !familyName) {
+        if (!name || !email || !password || !gender || !citizenship || !age
+        ) {
             return errorResponse("Missing required fields");
         }
 
@@ -25,9 +26,11 @@ export async function POST(req: Request) {
             name,
             email,
             password: hashedPassword,
+            verify: false,
+            citizenship,
             gender,
-            familyName,
-            familyMembers: familyMembers || [],
+            age,
+            profilePicture: "https://www.istockphoto.com/illustrations/penguin"
         });
 
         await newUser.save();
