@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import Image from "next/image";
+import { useState } from "react";
+import logo from "../assets/logo.png"
 
-const Navbar: React.FC = () => {
+const Navbar = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   const navLinks: { name: string; href: string }[] = [
@@ -18,7 +20,13 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <div className="text-xl font-bold tracking-wide cursor-pointer">
-            CareSync
+            <Image
+              className="size-8"
+              width={600}
+              height={600}
+              src={logo.src}
+              alt=""
+            />
           </div>
           <div className="hidden md:flex space-x-8">
             {navLinks.map((link) => (
@@ -39,19 +47,16 @@ const Navbar: React.FC = () => {
             aria-label="Toggle Menu"
           >
             <span
-              className={`absolute w-6 h-0.5 bg-white transition-transform duration-300 ${
-                isOpen ? "rotate-45" : "-translate-y-2"
-              }`}
+              className={`absolute w-6 h-0.5 bg-white transition-transform duration-300 ${isOpen ? "rotate-45" : "-translate-y-2"
+                }`}
             />
             <span
-              className={`absolute w-6 h-0.5 bg-white transition-opacity duration-300 ${
-                isOpen ? "opacity-0" : "opacity-100"
-              }`}
+              className={`absolute w-6 h-0.5 bg-white transition-opacity duration-300 ${isOpen ? "opacity-0" : "opacity-100"
+                }`}
             />
             <span
-              className={`absolute w-6 h-0.5 bg-white transition-transform duration-300 ${
-                isOpen ? "-rotate-45" : "translate-y-2"
-              }`}
+              className={`absolute w-6 h-0.5 bg-white transition-transform duration-300 ${isOpen ? "-rotate-45" : "translate-y-2"
+                }`}
             />
           </button>
         </div>
@@ -59,9 +64,8 @@ const Navbar: React.FC = () => {
 
       {/* Mobile Menu */}
       <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ${
-          isOpen ? "max-h-60 opacity-100" : "max-h-0 opacity-0"
-        } bg-[#16233A]`}
+        className={`md:hidden overflow-hidden transition-all duration-300 ${isOpen ? "max-h-60 opacity-100" : "max-h-0 opacity-0"
+          } bg-[#16233A]`}
       >
         <div className="px-4 py-4 space-y-3">
           {navLinks.map((link) => (

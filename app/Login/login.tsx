@@ -3,7 +3,7 @@
 import { Input } from "@/components/ui/input";
 import React, { useState } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-
+import Link from "next/link";
 const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
@@ -77,10 +77,10 @@ const Login = () => {
         <hr />
 
         <p className="-mt-15">
-          Don’t have an account?{" "}
-          <a href="" className="text-blue-500">
+          Don’t have an account?
+          <Link href="/signup" className="text-blue-500">
             Sign up
-          </a>
+          </Link>
         </p>
       </div>
     </div>

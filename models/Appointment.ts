@@ -1,0 +1,38 @@
+import type { Appointment as AppointmentType } from "@/types/appointment";
+import mongoose, { Schema } from "mongoose";
+
+const AppointmentSchema = new Schema<AppointmentType>({
+    doctor: {
+        type: Schema.Types.ObjectId,
+        ref: "Doctor",
+        required: true,
+    },
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    },
+    problem: {
+        type: String,
+        required: true,
+    },
+    date: {
+        type: Date,
+        required: true,
+    },
+    status: {
+        type: String,
+        enum: ["pending", "completed", "cancelled"],
+        default: "pending",
+    },
+}, {
+    timestamps: true,
+});
+
+if (mongoose.models.Appointment) {
+    delete mongoose.models.Appointment;
+}
+
+const Appointment = mongoose.model("Appointment", AppointmentSchema);
+
+export default Appointment;

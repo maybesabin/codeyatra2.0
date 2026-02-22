@@ -3,6 +3,7 @@
 import { Input } from "@/components/ui/input";
 import React, { useState } from "react";
 import { User, UserPen, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -138,9 +139,9 @@ const Signup = () => {
 
         <p className="-mt-8">
           Already have an account?
-          <a href="" className="cursor-pointer text-blue-500">
+          <Link href="/Login" className="cursor-pointer text-blue-500">
             Log in
-          </a>
+          </Link>
         </p>
       </div>
     </div>
