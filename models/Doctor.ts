@@ -1,7 +1,7 @@
-import { UserType } from "@/types/user";
+import type { Doctor } from "@/types/doctor";
 import mongoose, { Schema } from "mongoose";
 
-const UserSchema = new Schema<UserType>({
+const DoctorSchema = new Schema<Doctor>({
     name: {
         type: String,
         required: true,
@@ -36,34 +36,31 @@ const UserSchema = new Schema<UserType>({
         type: Number,
         required: true
     },
-    problem: {
-        type: String,
-    },
     profilePicture: {
         type: String,
         required: true
     },
-    member: [
-        {
-            type: mongoose.Types.ObjectId,
-            ref: "Member"
-        }
-    ],
-    appointments: [
-        {
-            type: Schema.Types.ObjectId,
-            ref: "Appointment"
-        }
-    ]
-
+    license: {
+        type: String,
+        default: ""
+    },
+    available: {
+        type: Boolean,
+        required: true,
+        default: true
+    },
+    appointments: {
+        type: [Schema.Types.ObjectId],
+        ref: "Appointment"
+    }
 }, {
     timestamps: true
 })
 
-if (mongoose.models.User) {
-    delete mongoose.models.User;
+if (mongoose.models.Doctor) {
+    delete mongoose.models.Doctor;
 }
 
-const User = mongoose.model("User", UserSchema);
+const Doctor = mongoose.model("Doctor", DoctorSchema);
 
-export default User
+export default Doctor

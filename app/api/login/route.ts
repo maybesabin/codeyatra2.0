@@ -1,5 +1,5 @@
 
-import { User } from "@/models/User";
+import User from "@/models/User";
 import connectToDb from "@/utils/db";
 import { handleError } from "@/utils/error";
 import { errorResponse } from "@/utils/response";
@@ -8,10 +8,10 @@ import jwt from "jsonwebtoken"
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-    await connectToDb()
-    const { email, password } = await req.json();
 
     try {
+        await connectToDb()
+        const { email, password } = await req.json();
         const user = await User.findOne({ email })
         if (!user) return errorResponse("User not found")
 
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
         if (!isMatch) return errorResponse("Wrong credentials")
 
         const token = jwt.sign(
-            { id: user._id, email: user.email },
+            { id: user._id, email: user.email, role: "user" },
             process.env.JWT_SECRET!,
             { expiresIn: "7d" }
         )
