@@ -6,10 +6,10 @@ import Appointments from "./appointments";
 
 const page = () => {
   return (
-    <div>
+    <>
       <Appointments />
       <Patients />
-    </div>
+    </>
   );
 };
 

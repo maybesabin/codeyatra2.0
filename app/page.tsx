@@ -3,14 +3,12 @@ import {
   ArrowRight,
   ChartColumnDecreasing,
   Clock,
-  Ghost,
   Lock,
   Shield,
   Users,
   Zap,
 } from "lucide-react";
 import Image from "next/image";
-import React from "react";
 import image from "../assets/landingPageDoctor.jpeg";
 import {
   Card,
@@ -18,15 +16,14 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
 } from "@/components/ui/card";
 import Link from "next/link";
 
 const page = () => {
   return (
-    <div>
-      <div className="flex justify-center items-center h-svh">
-        <div className="md:w-1/2  grid gap-6 p-4">
+    <div className="w-full max-w-7xl mx-auto">
+      <div className="flex justify-center items-center h-svh w-full max-w-7xl mx-auto">
+        <div className="grid gap-6 p-4">
           <div className="ring ring-primary bg-primary/20 rounded-full flex  items-center w-max pl-2 pr-4 py-1">
             <div className="size-2 mx-2 rounded-full animate-pulse bg-primary"></div>
             <p>Now available nationwide</p>
@@ -88,7 +85,7 @@ const page = () => {
       </div>
 
       <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 place-items-center p-5">
-        <Card className="h-60 sm:h-50">
+        <Card className="h-60">
           <CardHeader>
             <CardTitle className="bg-primary/20 ring ring-primary rounded-lg w-fit p-3">
               <Zap />
@@ -106,7 +103,7 @@ const page = () => {
           </CardContent>
         </Card>
 
-        <Card className="h-60 sm:h-50">
+        <Card className="h-60">
           <CardHeader>
             <CardTitle className="bg-primary/20 ring ring-primary rounded-lg w-fit p-3">
               <Shield />
@@ -124,7 +121,7 @@ const page = () => {
           </CardContent>
         </Card>
 
-        <Card className="h-60 sm:h-50">
+        <Card className="h-60">
           <CardHeader>
             <CardTitle className="bg-primary/20 ring ring-primary rounded-lg w-fit p-3">
               <Users />
@@ -142,7 +139,7 @@ const page = () => {
           </CardContent>
         </Card>
 
-        <Card className="h-60 sm:h-50">
+        <Card className="h-60">
           <CardHeader>
             <CardTitle className="bg-primary/20 ring ring-primary rounded-lg w-fit p-3">
               <ChartColumnDecreasing />
@@ -159,7 +156,7 @@ const page = () => {
             </p>
           </CardContent>
         </Card>
-        <Card className="h-60 sm:h-50">
+        <Card className="h-60">
           <CardHeader>
             <CardTitle className="bg-primary/20 ring ring-primary rounded-lg w-fit p-3">
               <Lock />
@@ -176,7 +173,7 @@ const page = () => {
             </p>
           </CardContent>
         </Card>
-        <Card className="h-60 sm:h-50">
+        <Card className="h-60">
           <CardHeader>
             <CardTitle className="bg-primary/20 ring ring-primary rounded-lg w-fit p-3">
               <Clock />
@@ -217,7 +214,7 @@ const page = () => {
           </Button>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

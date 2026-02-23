@@ -1,9 +1,9 @@
-import React, { ReactNode } from "react";
+import { ReactNode } from "react";
 
 const layout = ({ children }: { children: ReactNode }) => {
   return (
-    <div className="grid place-items-center">
-      <div className="md:w-[80vw] w-full">{children}</div>
+    <div className="w-full mx-auto grid place-items-center">
+      <div className="max-w-7xl mx-auto w-full">{children}</div>
     </div>
   );
 };

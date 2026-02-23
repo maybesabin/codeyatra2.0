@@ -61,7 +61,7 @@ const Appointments = () => {
   ];
 
   return (
-    <div className="p-6">
+    <div className="p-6 w-full">
       <header className="my-6">
         <h1 className="text-4xl text-primary font-semibold">Appointments</h1>
         <p className="text-sm text-stone-400">

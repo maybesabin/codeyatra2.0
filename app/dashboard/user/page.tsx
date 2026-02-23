@@ -1,6 +1,7 @@
 'use client';
 
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -143,8 +144,8 @@ export default function UserDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-5xl mx-auto px-4 py-10">
+    <div className="w-full">
+      <div className="mx-auto px-4 py-10">
         <header className="mb-10">
           <h1 className="text-5xl font-semibold text-primary">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage family and report health issues</p>
@@ -154,12 +155,13 @@ export default function UserDashboardPage() {
           {/* Add family member */}
           <Card className="shadow-none border-none">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <UserPlus className="w-5 h-5 text-primary" />
+              <CardTitle className="flex items-center gap-2 text-2xl font-medium text-primary">
+                <UserPlus className="w-7 h-7 text-primary" />
                 Add family member
               </CardTitle>
               <CardDescription>Add a family member to report problems on their behalf.</CardDescription>
             </CardHeader>
+
             <CardContent>
               <form onSubmit={handleAddMember} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -212,7 +214,7 @@ export default function UserDashboardPage() {
                     className="h-12"
                   />
                 </div>
-                <Button type="submit" disabled={addMemberLoading} className="w-full sm:w-auto">
+                <Button type="submit" disabled={addMemberLoading} className="w-full sm:w-auto py-6">
                   {addMemberLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -227,14 +229,15 @@ export default function UserDashboardPage() {
           </Card>
 
           {/* Report a problem */}
-          <Card>
+          <Card className='shadow-none border-none'>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Stethoscope className="w-5 h-5 text-primary" />
+              <CardTitle className="flex items-center gap-2 text-2xl font-medium text-primary">
+                <Stethoscope className="w-7 h-7 text-primary" />
                 Report a problem
               </CardTitle>
               <CardDescription>Book an appointment for yourself or a family member with an available doctor.</CardDescription>
             </CardHeader>
+
             <CardContent>
               <form onSubmit={handleReportProblem} className="space-y-4">
                 <div className="space-y-2">
@@ -243,13 +246,13 @@ export default function UserDashboardPage() {
                     value={reportForm.forWho}
                     onValueChange={(v) => setReportForm((p) => ({ ...p, forWho: v }))}
                   >
-                    <SelectTrigger className="h-12 w-full">
+                    <SelectTrigger className="h-16 w-full">
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="self">
                         <span className="flex items-center gap-2">
-                          <User className="w-4 h-4" />
+                          <User className="w-7 h-7" />
                           Myself
                         </span>
                       </SelectItem>
@@ -293,12 +296,13 @@ export default function UserDashboardPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">Problem / reason</label>
-                  <Input
+                  <Textarea
+                    style={{ resize: 'none' }}
                     value={reportForm.problem}
                     onChange={(e) => setReportForm((p) => ({ ...p, problem: e.target.value }))}
                     placeholder="Brief description"
                     required
-                    className="h-12"
+                    className="h-42"
                   />
                 </div>
                 <div className="space-y-2">
@@ -311,10 +315,10 @@ export default function UserDashboardPage() {
                     className="h-12"
                   />
                 </div>
-                <Button type="submit" disabled={reportLoading || loadingDoctors} className="w-full sm:w-auto">
+                <Button type="submit" disabled={reportLoading || loadingDoctors} className="w-full sm:w-auto py-6">
                   {reportLoading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-7 h-7 animate-spin" />
                       Submitting...
                     </>
                   ) : (
