@@ -3,7 +3,7 @@
 import { InfoItem } from "@/components/InfoItem";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
-import { LocationEdit, Phone, PhoneCall, Send } from "lucide-react";
+import { LocationEdit, PhoneCall, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const page = () => {

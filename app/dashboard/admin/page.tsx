@@ -50,6 +50,7 @@ type PendingRequest = {
   email: string;
   age: number;
   gender: string;
+  userId?: string;
   userName?: string;
   userEmail?: string;
 };
@@ -125,9 +126,15 @@ export default function AdminDashboardPage() {
   const handlePendingReject = async (r: PendingRequest) => {
     const token = getToken();
     if (!token) return;
-    setPendingAction({ key: `member-${r.id}-reject`, action: "reject" });
+    setPendingAction({ key: `${r.type}-${r.id}-reject`, action: "reject" });
     try {
-      await axios.post(`/api/admin/pending-members/${r.id}/reject`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      if (r.type === "member") {
+        await axios.post(`/api/admin/pending-members/${r.id}/reject`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      } else if (r.type === "user") {
+        await axios.patch(`/api/admin/users/${r.id}/verify`, { verify: false }, { headers: { Authorization: `Bearer ${token}` } });
+      } else {
+        await axios.patch(`/api/admin/doctors/${r.id}/verify`, { verify: false }, { headers: { Authorization: `Bearer ${token}` } });
+      }
       toast.success("Request rejected");
       fetchAll();
     } catch (err: unknown) {
@@ -210,8 +217,16 @@ export default function AdminDashboardPage() {
               <div className="space-y-5">
                 {requests.map((r) => {
                   const approveKey = `${r.type}-${r.id}`;
-                  const rejectKey = `member-${r.id}-reject`;
+                  const rejectKey = `${r.type}-${r.id}-reject`;
                   const typeLabel = r.type === "member" ? "Family member" : r.type === "user" ? "User" : "Doctor";
+                  const documentsHref =
+                    r.type === "user"
+                      ? `/dashboard/admin/users/${r.id}`
+                      : r.type === "doctor"
+                        ? `/dashboard/admin/doctors/${r.id}`
+                        : r.userId
+                          ? `/dashboard/admin/users/${r.userId}`
+                          : undefined;
                   return (
                     <div key={approveKey} className="rounded-xl border border-stone-200 bg-white p-5 flex flex-wrap items-center justify-between gap-5">
                       <div className="flex items-center gap-3 flex-wrap">
@@ -225,9 +240,9 @@ export default function AdminDashboardPage() {
                               ? `Requested by ${r.userName ?? "—"} (${r.userEmail ?? ""}) · ${r.gender} · ${r.age} yrs`
                               : `${r.email} · ${r.gender} · ${r.age} yrs`}
                           </p>
-                          {(r.type === "user" || r.type === "doctor") && (
+                          {documentsHref && (
                             <Link
-                              href={r.type === "user" ? `/dashboard/admin/users/${r.id}` : `/dashboard/admin/doctors/${r.id}`}
+                              href={documentsHref}
                               className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-1"
                             >
                               <ExternalLink className="w-3.5 h-3.5" /> View documents
@@ -245,17 +260,15 @@ export default function AdminDashboardPage() {
                           {pendingAction?.key === approveKey && pendingAction?.action === "approve" ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
                           Approve
                         </button>
-                        {r.type === "member" && (
-                          <button
-                            type="button"
-                            onClick={() => handlePendingReject(r)}
-                            disabled={!!pendingAction}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-base font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50"
-                          >
-                            {pendingAction?.key === rejectKey && pendingAction?.action === "reject" ? <Loader2 className="w-5 h-5 animate-spin" /> : <X className="w-5 h-5" />}
-                            Reject
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => handlePendingReject(r)}
+                          disabled={!!pendingAction}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-base font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50"
+                        >
+                          {pendingAction?.key === rejectKey && pendingAction?.action === "reject" ? <Loader2 className="w-5 h-5 animate-spin" /> : <X className="w-5 h-5" />}
+                          Reject
+                        </button>
                       </div>
                     </div>
                   );
