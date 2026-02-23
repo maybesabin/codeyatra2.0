@@ -73,7 +73,7 @@ const Navbar = () => {
       .finally(() => setAuthChecked(true));
   }, [pathname]);
 
-  const dashboardHref = user?.role === "doctor" ? "/dashboard/doctor" : "/dashboard/user";
+  const dashboardHref = user?.role === "doctor" ? "/dashboard/doctor" : user?.role === "admin" ? "/dashboard/admin" : "/dashboard/user";
 
   return (
     <nav className="text-primary bg-white border-b py-2 sticky top-0 z-50">

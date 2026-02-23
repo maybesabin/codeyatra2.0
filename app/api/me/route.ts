@@ -31,22 +31,15 @@ export async function GET(req: NextRequest) {
         { status: 401 }
       );
     }
-    await connectToDb();
     if (decoded.role === "admin") {
-      const user = await User.findById(decoded.id).select("name email").lean();
-      if (!user) {
-        return NextResponse.json(
-          { success: false, message: "Admin not found" },
-          { status: 404 }
-        );
-      }
       return NextResponse.json({
         success: true,
-        name: (user as { name?: string }).name ?? "Admin",
+        name: "Admin",
         profilePicture: "",
         role: "admin",
       });
     }
+    await connectToDb();
     if (decoded.role === "doctor") {
       const doctor = await Doctor.findById(decoded.id)
         .select("name profilePicture")

@@ -57,6 +57,13 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        if (!user.verify) {
+            return NextResponse.json(
+                { success: false, message: "Your account must be verified to request appointments. Submit your documents first." },
+                { status: 403 }
+            );
+        }
+
         if (memberId) {
             const memberIds = (user.member ?? []).map((id) => String(id));
             if (!memberIds.includes(String(memberId))) {

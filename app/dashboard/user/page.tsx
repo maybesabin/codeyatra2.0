@@ -348,7 +348,7 @@ export default function UserDashboardPage() {
           </Card>
 
           {/* Report a problem */}
-          <Card className='shadow-none border-none'>
+          <Card className={`shadow-none border-none ${userVerify !== true ? 'opacity-50' : ''}`}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-2xl font-medium text-primary">
                 <Stethoscope className="w-7 h-7 text-primary" />
@@ -434,7 +434,7 @@ export default function UserDashboardPage() {
                     className="h-12"
                   />
                 </div>
-                <Button type="submit" disabled={reportLoading || loadingDoctors} className="w-full sm:w-auto py-6">
+                <Button type="submit" disabled={reportLoading || loadingDoctors || userVerify !== true} className="w-full sm:w-auto py-6">
                   {reportLoading ? (
                     <>
                       <Loader2 className="w-7 h-7 animate-spin" />
