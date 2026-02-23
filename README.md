@@ -7,11 +7,11 @@ CareSync is a digital healthcare platform that simplifies medical information an
 ## Problem Statement
 
 Many families struggle with:
-- Confusing medical reports filled with complex terminology
-- Scattered prescriptions and lab results
 - Missed medication schedules
-- Lack of centralized family health records
+- Lack of centralized patient health records
 - Poor understanding of medical conditions
+- Inefficient appointment and queue management
+- Manual record-keeping leading to data loss
 
 ---
 
@@ -27,6 +27,7 @@ Many families struggle with:
 - Next.js API Routes
 - Node.js
 - MongoDB / PostgreSQL
+- phi3:mini (local)
 
 ---
 
