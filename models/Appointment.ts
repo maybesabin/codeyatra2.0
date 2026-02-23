@@ -39,6 +39,18 @@ const AppointmentSchema = new Schema<AppointmentType>({
         enum: ["low", "moderate", "high"],
         required: false,
     },
+    startTime: {
+        type: String,
+        required: false,
+    },
+    endTime: {
+        type: String,
+        required: false,
+    },
+    meetingLink: {
+        type: String,
+        required: false,
+    },
 }, {
     timestamps: true,
 });

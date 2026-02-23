@@ -12,6 +12,9 @@ export interface AppointmentType {
     status: AppointmentStatus;
     cancellationMessage?: string;
     priority?: AppointmentPriority;
+    startTime?: string; // e.g. "09:00"
+    endTime?: string;   // e.g. "10:00"
+    meetingLink?: string;
 }
 
 export type Appointment = AppointmentType;

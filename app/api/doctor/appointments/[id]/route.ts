@@ -43,7 +43,7 @@ export async function PATCH(
         }
 
         const body = await req.json();
-        const { status, message } = body;
+        const { status, message, startTime, endTime, meetingLink } = body;
         if (!status || !ALLOWED_STATUSES.includes(status)) {
             return errorResponse("Valid status required: pending, completed, or cancelled");
         }
@@ -66,6 +66,60 @@ export async function PATCH(
         }
 
         appointment.status = status;
+        if (status === "completed") {
+            if (typeof startTime !== "string" || typeof endTime !== "string") {
+                return errorResponse("startTime and endTime (HH:MM) are required when approving");
+            }
+            const toMinutes = (t: string) => {
+                const m = /^(\d{2}):(\d{2})$/.exec(t);
+                if (!m) return null;
+                const h = Number(m[1]);
+                const min = Number(m[2]);
+                if (h < 0 || h > 23 || min < 0 || min > 59) return null;
+                return h * 60 + min;
+            };
+            const startMin = toMinutes(startTime);
+            const endMin = toMinutes(endTime);
+            if (startMin === null || endMin === null || endMin <= startMin) {
+                return errorResponse("Invalid time range. Use HH:MM, end must be after start.");
+            }
+
+            // Check overlap with other approved appointments for this doctor
+            const others = await Appointment.find({
+                doctor: appointment.doctor,
+                status: "completed",
+                _id: { $ne: appointmentId },
+            }).lean();
+
+            for (const other of others as { startTime?: string; endTime?: string }[]) {
+                if (!other.startTime || !other.endTime) continue;
+                const oStart = toMinutes(other.startTime);
+                const oEnd = toMinutes(other.endTime);
+                if (oStart === null || oEnd === null) continue;
+                const overlap = !(endMin <= oStart || startMin >= oEnd);
+                if (overlap) {
+                    return errorResponse("Selected time overlaps with another approved appointment.");
+                }
+            }
+
+            appointment.startTime = startTime;
+            appointment.endTime = endTime;
+            const trimmedLink =
+                typeof meetingLink === "string" && meetingLink.trim().length > 0
+                    ? meetingLink.trim()
+                    : undefined;
+            if (trimmedLink) {
+                appointment.meetingLink = trimmedLink;
+            } else if (!appointment.meetingLink) {
+                const alphabet = "abcdefghijklmnopqrstuvwxyz";
+                const randomCode = () => {
+                    const part = () =>
+                        Array.from({ length: 3 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+                    return `${part()}-${part()}-${part()}`;
+                };
+                appointment.meetingLink = `https://meet.google.com/${randomCode()}`;
+            }
+        }
         if (status === "cancelled" && typeof message === "string" && message.trim()) {
             appointment.cancellationMessage = message.trim().slice(0, 500);
         }

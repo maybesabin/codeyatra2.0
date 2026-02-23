@@ -70,6 +70,9 @@ export async function GET(req: NextRequest) {
                 forName,
                 createdAt: (a as { createdAt?: string }).createdAt,
                 cancellationMessage: (a as { cancellationMessage?: string }).cancellationMessage,
+                startTime: (a as { startTime?: string }).startTime,
+                endTime: (a as { endTime?: string }).endTime,
+                meetingLink: (a as { meetingLink?: string }).meetingLink,
             };
         });
 

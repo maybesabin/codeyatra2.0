@@ -180,6 +180,10 @@ export default function DoctorDashboard() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [cancelModal, setCancelModal] = useState<{ apptId: string } | null>(null);
   const [cancelMessage, setCancelMessage] = useState("");
+  const [approveModal, setApproveModal] = useState<{ apptId: string } | null>(null);
+  const [approveStart, setApproveStart] = useState("");
+  const [approveEnd, setApproveEnd] = useState("");
+  const [approveMeetingLink, setApproveMeetingLink] = useState("");
 
   const fetchAppointments = useCallback(async () => {
     const token = getToken();
@@ -216,14 +220,26 @@ export default function DoctorDashboard() {
   const handleStatusUpdate = async (
     apptId: string,
     newStatus: "completed" | "cancelled",
-    message?: string
+    message?: string,
+    startTime?: string,
+    endTime?: string,
+    meetingLink?: string
   ) => {
     const token = getToken();
     if (!token) return;
     setUpdatingId(apptId);
     try {
-      const body: { status: string; message?: string } = { status: newStatus };
+      const body: { status: string; message?: string; startTime?: string; endTime?: string; meetingLink?: string } = {
+        status: newStatus,
+      };
       if (newStatus === "cancelled" && message?.trim()) body.message = message.trim();
+      if (newStatus === "completed" && startTime && endTime) {
+        body.startTime = startTime;
+        body.endTime = endTime;
+        if (meetingLink && meetingLink.trim()) {
+          body.meetingLink = meetingLink.trim();
+        }
+      }
       await axios.patch(
         `/api/doctor/appointments/${apptId}`,
         body,
@@ -232,6 +248,10 @@ export default function DoctorDashboard() {
       toast.success(newStatus === "completed" ? "Appointment approved" : "Appointment cancelled");
       setCancelModal(null);
       setCancelMessage("");
+      setApproveModal(null);
+      setApproveStart("");
+      setApproveEnd("");
+      setApproveMeetingLink("");
       fetchAppointments();
     } catch (err) {
       const msg = axios.isAxiosError(err) && err.response?.data?.message
@@ -251,6 +271,33 @@ export default function DoctorDashboard() {
   const handleCancelConfirm = () => {
     if (!cancelModal) return;
     handleStatusUpdate(cancelModal.apptId, "cancelled", cancelMessage);
+  };
+
+  const handleApproveClick = (apptId: string) => {
+    setApproveStart("");
+    setApproveEnd("");
+    setApproveMeetingLink("");
+    setApproveModal({ apptId });
+  };
+
+  const handleApproveConfirm = () => {
+    if (!approveModal) return;
+    if (!approveMeetingLink.trim()) {
+      toast.error("Please paste a Google Meet link");
+      return;
+    }
+    if (!approveStart || !approveEnd) {
+      toast.error("Please select start and end time");
+      return;
+    }
+    handleStatusUpdate(
+      approveModal.apptId,
+      "completed",
+      undefined,
+      approveStart,
+      approveEnd,
+      approveMeetingLink
+    );
   };
 
   const filtered = appointments.filter((a) => {
@@ -383,7 +430,7 @@ export default function DoctorDashboard() {
                         <button
                           type="button"
                           disabled={updatingId === appt.id}
-                          onClick={() => handleStatusUpdate(appt.id, "completed")}
+                          onClick={() => handleApproveClick(appt.id)}
                           className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50"
                         >
                           {updatingId === appt.id ? (
@@ -429,6 +476,78 @@ export default function DoctorDashboard() {
           }}
           loading={updatingId === cancelModal.apptId}
         />
+      )}
+
+      {approveModal && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-[380px] max-w-[95vw] space-y-4">
+            <h2 className="font-semibold text-lg">Approve appointment</h2>
+            <p className="text-sm text-stone-500">
+              Choose a time slot for this appointment. Time should not overlap with your other approved appointments.
+            </p>
+            <div className="space-y-2">
+              <label className="text-xs text-stone-500">Google Meet link</label>
+              <input
+                type="url"
+                value={approveMeetingLink}
+                onChange={(e) => setApproveMeetingLink(e.target.value)}
+                placeholder="https://meet.google.com/abc-def-ghi"
+                className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div className="flex gap-2 items-center">
+              <div className="flex-1 space-y-1">
+                <label className="text-xs text-stone-500">Start time</label>
+                <input
+                  type="time"
+                  value={approveStart}
+                  onChange={(e) => setApproveStart(e.target.value)}
+                  className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div className="flex-1 space-y-1">
+                <label className="text-xs text-stone-500">End time</label>
+                <input
+                  type="time"
+                  value={approveEnd}
+                  onChange={(e) => setApproveEnd(e.target.value)}
+                  className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setApproveModal(null);
+                  setApproveStart("");
+                  setApproveEnd("");
+                }}
+                className="px-3 py-1.5 rounded-lg border border-stone-200 text-stone-600 hover:bg-stone-50 text-sm"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleApproveConfirm}
+                disabled={updatingId === approveModal.apptId}
+                className="px-3 py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50 text-sm font-medium flex items-center gap-1"
+              >
+                {updatingId === approveModal.apptId ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3 h-3" />
+                    Approve
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

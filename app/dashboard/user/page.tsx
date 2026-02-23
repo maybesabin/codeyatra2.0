@@ -25,7 +25,18 @@ import { toast } from 'sonner';
 
 type Doctor = { id: string; name: string; profilePicture?: string };
 type FamilyMember = { id: string; name: string; gender: string; age: number; profilePicture: string; problem?: string };
-type AppointmentItem = { id: string; doctorName: string; problem: string; date: string; status: 'pending' | 'completed' | 'cancelled'; forName: string; cancellationMessage?: string };
+type AppointmentItem = {
+  id: string;
+  doctorName: string;
+  problem: string;
+  date: string;
+  status: 'pending' | 'completed' | 'cancelled';
+  forName: string;
+  cancellationMessage?: string;
+  startTime?: string;
+  endTime?: string;
+  meetingLink?: string;
+};
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -57,6 +68,8 @@ export default function UserDashboardPage() {
   const [priorityLoading, setPriorityLoading] = useState(false);
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [loadingAppointments, setLoadingAppointments] = useState(true);
+  const [appointmentsSummary, setAppointmentsSummary] = useState<string | null>(null);
+  const [appointmentsSummaryLoading, setAppointmentsSummaryLoading] = useState(false);
   const [userVerify, setUserVerify] = useState<boolean | null>(null);
   const [userDocumentsForm, setUserDocumentsForm] = useState({ citizenship: '', profilePicture: '' });
   const [documentsLoading, setDocumentsLoading] = useState(false);
@@ -117,6 +130,7 @@ export default function UserDashboardPage() {
       const { data } = await axios.get<{ success: boolean; appointments: AppointmentItem[] }>('/api/user/appointments', {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log(appointments)
       if (data.success && data.appointments) setAppointments(data.appointments);
       else setAppointments([]);
     } catch {
@@ -242,6 +256,37 @@ export default function UserDashboardPage() {
     }
   };
 
+  const handleSummarizeAppointments = async () => {
+    const token = getToken();
+    if (!token) return;
+    if (!appointments.length) {
+      toast.info('No appointments to summarize yet');
+      return;
+    }
+    setAppointmentsSummaryLoading(true);
+    setAppointmentsSummary(null);
+    try {
+      const { data } = await axios.post<{ success?: boolean; summary?: string; message?: string }>(
+        '/api/user/appointments/summarize',
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (data.success && data.summary) {
+        setAppointmentsSummary(data.summary);
+      } else {
+        toast.error(data.message || 'Could not generate summary');
+      }
+    } catch (err: unknown) {
+      const msg =
+        axios.isAxiosError(err) && err.response?.data?.message
+          ? String(err.response.data.message)
+          : 'Failed to generate summary';
+      toast.error(msg);
+    } finally {
+      setAppointmentsSummaryLoading(false);
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="mx-auto px-4 py-10">
@@ -263,38 +308,49 @@ export default function UserDashboardPage() {
 
             <CardContent className="space-y-8">
               {/* Your verification documents */}
-              <div className={`space-y-4 ${userVerify === true ? "opacity-50" : ""}`}>
-                <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
-                  Your verification
-                  {userVerify === true && <span className="text-xs font-normal text-green-600">Verified</span>}
-                  {userVerify === false && <span className="text-xs font-normal text-amber-600">Pending</span>}
-                </h3>
-                <form onSubmit={handleSubmitDocuments} className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Profile picture URL</label>
-                    <Input
-                      value={userDocumentsForm.profilePicture}
-                      onChange={(e) => setUserDocumentsForm((p) => ({ ...p, profilePicture: e.target.value }))}
-                      placeholder="https://..."
-                      required
-                      className="h-12"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Citizenship document URL</label>
-                    <Input
-                      value={userDocumentsForm.citizenship}
-                      onChange={(e) => setUserDocumentsForm((p) => ({ ...p, citizenship: e.target.value }))}
-                      placeholder="https://..."
-                      required
-                      className="h-12"
-                    />
-                  </div>
-                  <Button type="submit" disabled={documentsLoading} className="w-full sm:w-auto py-6">
-                    {documentsLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</> : 'Submit for verification'}
-                  </Button>
-                </form>
-              </div>
+              {userVerify !== true ? (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                    Your verification
+                    {userVerify === false && <span className="text-xs font-normal text-amber-600">Pending</span>}
+                  </h3>
+                  <form onSubmit={handleSubmitDocuments} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Profile picture URL</label>
+                      <Input
+                        value={userDocumentsForm.profilePicture}
+                        onChange={(e) => setUserDocumentsForm((p) => ({ ...p, profilePicture: e.target.value }))}
+                        placeholder="https://..."
+                        required
+                        className="h-12"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Citizenship document URL</label>
+                      <Input
+                        value={userDocumentsForm.citizenship}
+                        onChange={(e) => setUserDocumentsForm((p) => ({ ...p, citizenship: e.target.value }))}
+                        placeholder="https://..."
+                        required
+                        className="h-12"
+                      />
+                    </div>
+                    <Button type="submit" disabled={documentsLoading} className="w-full sm:w-auto py-6">
+                      {documentsLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</> : 'Submit for verification'}
+                    </Button>
+                  </form>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                    Your verification
+                    <span className="text-xs font-normal text-green-600">Verified</span>
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Your documents are verified. You can now add family members below.
+                  </p>
+                </div>
+              )}
 
               {/* Add family member — only when verified */}
               <div className="space-y-4 pt-4 border-t border-border">
@@ -303,7 +359,9 @@ export default function UserDashboardPage() {
                   Add family member
                 </h3>
                 {userVerify !== true ? (
-                  <p className="text-sm text-muted-foreground">Submit your documents above and get verified first. Then you can add family members (each will need their documents and admin approval).</p>
+                  <p className="text-sm text-muted-foreground">
+                    Submit your documents above and get verified first. Then you can add family members (each will need their documents and admin approval).
+                  </p>
                 ) : (
                   <form onSubmit={handleAddMember} className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -498,14 +556,38 @@ export default function UserDashboardPage() {
 
         {/* My appointments */}
         <Card className="shadow-none border-none">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-2xl font-medium text-primary">
-              <CalendarDays className="w-7 h-7 text-primary" />
-              My appointments
-            </CardTitle>
-            <CardDescription>Your appointment requests. Status updates when the doctor approves or cancels.</CardDescription>
+          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-2xl font-medium text-primary">
+                <CalendarDays className="w-7 h-7 text-primary" />
+                My appointments
+              </CardTitle>
+              <CardDescription>Your appointment requests. Status updates when the doctor approves or cancels.</CardDescription>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleSummarizeAppointments}
+              disabled={appointmentsSummaryLoading || loadingAppointments || appointments.length === 0}
+            >
+              {appointmentsSummaryLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Summarizing…
+                </>
+              ) : (
+                'Summarize'
+              )}
+            </Button>
           </CardHeader>
           <CardContent>
+            {appointmentsSummary && (
+              <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground">
+                <p className="font-medium mb-1">Summary & next steps</p>
+                <p className="text-muted-foreground whitespace-pre-line">{appointmentsSummary}</p>
+              </div>
+            )}
             {loadingAppointments ? (
               <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
                 <Loader2 className="w-6 h-6 animate-spin" />
@@ -528,8 +610,22 @@ export default function UserDashboardPage() {
                         <p className="text-xs text-muted-foreground">
                           {new Date(appt.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                           {' · '}
-                          {new Date(appt.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                          {appt.startTime && appt.endTime
+                            ? `${appt.startTime}–${appt.endTime}`
+                            : new Date(appt.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                         </p>
+                        {appt.meetingLink && (
+                          <p className="text-xs mt-1">
+                            <a
+                              href={appt.meetingLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary underline"
+                            >
+                              Join Google Meet
+                            </a>
+                          </p>
+                        )}
                         {appt.status === 'cancelled' && appt.cancellationMessage && (
                           <p className="text-sm text-muted-foreground mt-2 pt-2 border-t border-border italic">
                             Message from doctor: {appt.cancellationMessage}

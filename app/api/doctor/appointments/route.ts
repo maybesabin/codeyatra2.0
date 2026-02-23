@@ -82,6 +82,9 @@ export async function GET(req: NextRequest) {
                 avatar: displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "?",
                 memberId: m?._id,
                 userId: u?._id,
+                startTime: (a as { startTime?: string }).startTime,
+                endTime: (a as { endTime?: string }).endTime,
+                meetingLink: (a as { meetingLink?: string }).meetingLink,
             };
         });
 
