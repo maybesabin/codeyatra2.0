@@ -20,20 +20,20 @@ export async function GET(
         if (!doctor) {
             return NextResponse.json({ success: false, message: "Doctor not found" }, { status: 404 });
         }
-        const d = doctor as { _id: string; name: string; email: string; age: number; gender: string; verify?: boolean; profilePicture?: string; citizenship?: string; license?: string; available?: boolean };
+
         return NextResponse.json({
             success: true,
             doctor: {
-                id: d._id,
-                name: d.name,
-                email: d.email,
-                age: d.age,
-                gender: d.gender,
-                verify: d.verify ?? false,
-                profilePicture: d.profilePicture,
-                citizenship: d.citizenship,
-                license: d.license,
-                available: d.available ?? true,
+                id: doctor._id.toString(),
+                name: doctor.name,
+                email: doctor.email,
+                age: doctor.age,
+                gender: doctor.gender,
+                verify: doctor.verify ?? false,
+                profilePicture: doctor.profilePicture,
+                citizenship: doctor.citizenship,
+                license: doctor.license,
+                available: doctor.available ?? true,
             },
         }, { status: 200 });
     } catch (err) {
@@ -56,7 +56,6 @@ export async function DELETE(
         if (!doctor) {
             return NextResponse.json({ success: false, message: "Doctor not found" }, { status: 404 });
         }
-        await Appointment.deleteMany({ doctor: id });
         await Doctor.findByIdAndDelete(id);
         return NextResponse.json({ success: true, message: "Doctor deleted" }, { status: 200 });
     } catch (err) {
