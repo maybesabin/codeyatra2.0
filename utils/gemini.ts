@@ -9,32 +9,29 @@ export async function inferAppointmentPriority(problem: string): Promise<Appoint
         return "moderate";
     }
 
-    const prompt = `You are a medical triage assistant. Based on the following patient problem/condition description, determine the appointment priority.
-
-Rules:
-- "high": urgent/serious (e.g., chest pain, severe bleeding, breathing difficulty, stroke symptoms, severe pain, possible fracture)
-- "moderate": needs timely care but not emergency (e.g., persistent fever, infection, moderate pain, chronic condition flare-up)
-- "low": routine/non-urgent (e.g., mild cold, checkup, minor skin issue, routine follow-up)
-
-Respond with exactly one word: low, moderate, or high. Nothing else.
-
-Problem: ${problem}`;
+    const prompt = `Based on this medical problem, reply with only one word: low, moderate, or high. Problem: ${problem}`;
 
     try {
-        const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        maxOutputTokens: 10,
-                        temperature: 0.1,
-                    },
-                }),
-            }
-        );
+        let res: Response;
+        try {
+            res = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: {
+                            maxOutputTokens: 20,
+                            temperature: 0.3,
+                        },
+                    }),
+                }
+            );
+        } catch (networkErr) {
+            console.error("Network error calling Gemini:", networkErr);
+            return "moderate";
+        }
 
         if (!res.ok) {
             const errText = await res.text();
@@ -51,8 +48,15 @@ Problem: ${problem}`;
         const text =
             data.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toLowerCase() ?? "";
 
-        const match = VALID_PRIORITIES.find((p) => text.includes(p));
-        return match ?? "moderate";
+        // Prefer exact match; "high" and "low" before "moderate" to avoid substring false positives
+        const exactMatch = VALID_PRIORITIES.find((p) => {
+            const regex = new RegExp(`\\b${p}\\b`, "i");
+            return regex.test(text);
+        });
+        if (exactMatch) return exactMatch;
+
+        const fallbackMatch = VALID_PRIORITIES.find((p) => text.includes(p));
+        return fallbackMatch ?? "moderate";
     } catch (err) {
         console.error("Gemini inferAppointmentPriority error:", err);
         return "moderate";

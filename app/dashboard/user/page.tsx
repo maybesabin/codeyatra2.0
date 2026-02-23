@@ -51,8 +51,10 @@ export default function UserDashboardPage() {
     doctorId: '',
     problem: '',
     date: '',
+    priority: '' as string,
   });
   const [reportLoading, setReportLoading] = useState(false);
+  const [priorityLoading, setPriorityLoading] = useState(false);
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [loadingAppointments, setLoadingAppointments] = useState(true);
   const [userVerify, setUserVerify] = useState<boolean | null>(null);
@@ -187,27 +189,54 @@ export default function UserDashboardPage() {
     }
   };
 
+  const handleSetPriority = async () => {
+    if (!reportForm.problem.trim()) {
+      toast.error('Enter a problem first');
+      return;
+    }
+    const token = getToken();
+    if (!token) return;
+    setPriorityLoading(true);
+    try {
+      const { data } = await axios.post<{ success?: boolean; priority?: string }>(
+        '/api/appointments/infer-priority',
+        { problem: reportForm.problem },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (data?.success && data?.priority) {
+        setReportForm((p) => ({ ...p, priority: data.priority! }));
+        toast.success('Priority set');
+      } else toast.error('Could not set priority');
+    } catch {
+      toast.error('Failed to set priority');
+    } finally {
+      setPriorityLoading(false);
+    }
+  };
+
   const handleReportProblem = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = getToken();
     if (!token) return;
+    if (!reportForm.priority) {
+      toast.error('Click "Set priority" first');
+      return;
+    }
     setReportLoading(true);
     try {
-      const payload: { doctorId: string; problem: string; date: string; memberId?: string } = {
+      const payload: { doctorId: string; problem: string; date: string; memberId?: string; priority: string } = {
         doctorId: reportForm.doctorId,
         problem: reportForm.problem,
         date: reportForm.date,
+        priority: reportForm.priority,
       };
       if (reportForm.forWho !== 'self' && reportForm.forWho !== 'none') payload.memberId = reportForm.forWho;
-      await axios.post('/api/appointments', payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.post('/api/appointments', payload, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Appointment requested');
-      setReportForm((prev) => ({ ...prev, problem: '', date: '', doctorId: '' }));
+      setReportForm((p) => ({ ...p, problem: '', date: '', doctorId: '', priority: '' }));
       fetchAppointments();
     } catch (err: unknown) {
-      const msg = axios.isAxiosError(err) && err.response?.data?.message ? String(err.response.data.message) : 'Failed to submit';
-      toast.error(msg);
+      toast.error(axios.isAxiosError(err) && err.response?.data?.message ? String(err.response.data.message) : 'Failed to submit');
     } finally {
       setReportLoading(false);
     }
@@ -423,6 +452,24 @@ export default function UserDashboardPage() {
                     required
                     className="h-42"
                   />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Priority</label>
+                  <div className="flex gap-2">
+                    <Select value={reportForm.priority} onValueChange={(v) => setReportForm((p) => ({ ...p, priority: v }))}>
+                      <SelectTrigger className="h-12 flex-1">
+                        <SelectValue placeholder="Select or auto-set" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="moderate">Moderate</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button type="button" variant="outline" onClick={handleSetPriority} disabled={priorityLoading || !reportForm.problem.trim()}>
+                      {priorityLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Set priority'}
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">Preferred date</label>

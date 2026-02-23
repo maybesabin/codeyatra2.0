@@ -1,5 +1,4 @@
 import Appointment from "@/models/Appointment";
-import { inferAppointmentPriority } from "@/utils/gemini";
 import Doctor from "@/models/Doctor";
 import User from "@/models/User";
 import connectToDb from "@/utils/db";
@@ -37,7 +36,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { doctorId, problem, date, memberId } = body;
+        const { doctorId, problem, date, memberId, priority } = body;
 
         if (!doctorId || !problem || !date) {
             return errorResponse("Missing required fields: doctorId, problem, date");
@@ -83,7 +82,8 @@ export async function POST(req: NextRequest) {
             return errorResponse("Doctor is not verified yet");
         }
 
-        const priority = await inferAppointmentPriority(String(problem).trim());
+        const validPriorities = ["low", "moderate", "high"];
+        const resolvedPriority = validPriorities.includes(priority) ? priority : "moderate";
 
         const appointment = new Appointment({
             doctor: doctorId,
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
             problem,
             date: appointmentDate,
             status: "pending",
-            priority,
+            priority: resolvedPriority,
         });
         await appointment.save();
 
