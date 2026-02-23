@@ -51,7 +51,7 @@ const page = () => {
         <Image
           alt="doctor"
           src={image}
-          className=" object-cover hidden md:block w-[30rem] h-[60vh] rounded-xl shadow-lg"
+          className=" object-cover hidden md:block w-120 h-[60vh] rounded-xl shadow-lg"
         />
       </div>
       <div className="flex flex-wrap grow bg-white">

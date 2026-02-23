@@ -151,9 +151,9 @@ export default function AdminUserDetailPage() {
 
       <div className="space-y-6">
         <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-          <div className="p-6 sm:p-8 bg-gradient-to-br from-stone-50 to-white">
+          <div className="p-6 sm:p-8 bg-linear-to-br from-stone-50 to-white">
             <div className="flex flex-col sm:flex-row gap-6 items-start">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 {user.profilePicture ? (
                   <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-white shadow-lg ring-1 ring-stone-200">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -231,12 +231,12 @@ export default function AdminUserDetailPage() {
                     <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
                       <div className="flex gap-4">
                         {m.profilePicture ? (
-                          <div className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border border-stone-200 bg-white">
+                          <div className="shrink-0 w-16 h-16 rounded-xl overflow-hidden border border-stone-200 bg-white">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={m.profilePicture} alt={m.name} className="w-full h-full object-cover" />
                           </div>
                         ) : (
-                          <div className="w-16 h-16 rounded-xl bg-stone-200 flex items-center justify-center flex-shrink-0">
+                          <div className="w-16 h-16 rounded-xl bg-stone-200 flex items-center justify-center shrink-0">
                             <User className="w-8 h-8 text-stone-400" />
                           </div>
                         )}
