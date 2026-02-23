@@ -15,7 +15,7 @@ function getDecodedFromToken(req: NextRequest): { id: string; role: string } | n
       email: string;
       role?: string;
     };
-    const role = decoded.role === "doctor" ? "doctor" : "user";
+    const role = decoded.role === "doctor" ? "doctor" : decoded.role === "admin" ? "admin" : "user";
     return { id: decoded.id, role };
   } catch {
     return null;
@@ -32,6 +32,21 @@ export async function GET(req: NextRequest) {
       );
     }
     await connectToDb();
+    if (decoded.role === "admin") {
+      const user = await User.findById(decoded.id).select("name email").lean();
+      if (!user) {
+        return NextResponse.json(
+          { success: false, message: "Admin not found" },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json({
+        success: true,
+        name: (user as { name?: string }).name ?? "Admin",
+        profilePicture: "",
+        role: "admin",
+      });
+    }
     if (decoded.role === "doctor") {
       const doctor = await Doctor.findById(decoded.id)
         .select("name profilePicture")
@@ -50,7 +65,7 @@ export async function GET(req: NextRequest) {
       });
     }
     const user = await User.findById(decoded.id)
-      .select("name profilePicture")
+      .select("name profilePicture verify citizenship")
       .lean();
     if (!user) {
       return NextResponse.json(
@@ -58,11 +73,14 @@ export async function GET(req: NextRequest) {
         { status: 404 }
       );
     }
+    const u = user as { name?: string; profilePicture?: string; verify?: boolean; citizenship?: string };
     return NextResponse.json({
       success: true,
-      name: user.name,
-      profilePicture: user.profilePicture ?? "",
+      name: u.name,
+      profilePicture: u.profilePicture ?? "",
       role: "user",
+      verify: u.verify ?? false,
+      citizenship: u.citizenship ?? "",
     });
   } catch (err) {
     return handleError(err);

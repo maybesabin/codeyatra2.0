@@ -17,8 +17,9 @@ export async function POST(req: Request) {
         const isMatch = await bcrypt.compare(password, user.password)
         if (!isMatch) return errorResponse("Wrong credentials")
 
+        const role = (user as { isAdmin?: boolean }).isAdmin ? "admin" : "user"
         const token = jwt.sign(
-            { id: user._id, email: user.email, role: "user" },
+            { id: user._id, email: user.email, role },
             process.env.JWT_SECRET!,
             { expiresIn: "7d" }
         )

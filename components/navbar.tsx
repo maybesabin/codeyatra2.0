@@ -8,7 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import axios from "axios";
 import { User, LogOut } from "lucide-react";
 
-type AuthUser = { name: string; profilePicture: string; role: string };
+type AuthUser = { name: string; profilePicture: string; role: string; verify?: boolean };
 
 const capitalizeFirst = (s: string) =>
   s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
@@ -54,7 +54,7 @@ const Navbar = () => {
       return;
     }
     axios
-      .get<{ success: boolean; name: string; profilePicture: string; role: string }>("/api/me", {
+      .get<{ success: boolean; name: string; profilePicture: string; role: string; verify?: boolean }>("/api/me", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(({ data }) => {
@@ -63,6 +63,7 @@ const Navbar = () => {
             name: data.name,
             profilePicture: data.profilePicture ?? "",
             role: data.role ?? "user",
+            verify: data.verify ?? false,
           });
         } else {
           setUser(null);
@@ -128,9 +129,16 @@ const Navbar = () => {
                         </span>
                       )}
                     </span>
-                    <span className="font-medium text-foreground max-w-[120px] truncate">
-                      {capitalizeFirst(user.name)}
-                    </span>
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium text-foreground max-w-[120px] truncate">
+                        {capitalizeFirst(user.name)}
+                      </span>
+                      {user.role === "user" && (
+                        <span className={`-mt-1 text-xs ${user.verify ? "text-green-600" : "text-red-600"}`}>
+                          {user.verify ? "verified" : "not verified"}
+                        </span>
+                      )}
+                    </div>
                   </button>
                   {profileDropdownOpen && (
                     <div
@@ -225,7 +233,14 @@ const Navbar = () => {
                       </span>
                     )}
                   </span>
-                  <span className="font-medium text-foreground">{capitalizeFirst(user.name)}</span>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-foreground">{capitalizeFirst(user.name)}</span>
+                    {user.role === "user" && (
+                      <span className={`text-xs ${user.verify ? "text-green-600" : "text-red-600"}`}>
+                        {user.verify ? "verified" : "not verified"}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <Link
                   href={dashboardHref}

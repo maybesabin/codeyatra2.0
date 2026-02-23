@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useState, useEffect, useCallback } from 'react';
-import { UserPlus, Stethoscope, User, Loader2, CalendarDays } from 'lucide-react';
+import { UserPlus, Stethoscope, User, Loader2, CalendarDays, FileCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -43,6 +43,7 @@ export default function UserDashboardPage() {
     gender: '',
     age: '',
     profilePicture: '',
+    citizenship: '',
   });
   const [addMemberLoading, setAddMemberLoading] = useState(false);
   const [reportForm, setReportForm] = useState({
@@ -54,6 +55,28 @@ export default function UserDashboardPage() {
   const [reportLoading, setReportLoading] = useState(false);
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [loadingAppointments, setLoadingAppointments] = useState(true);
+  const [userVerify, setUserVerify] = useState<boolean | null>(null);
+  const [userDocumentsForm, setUserDocumentsForm] = useState({ citizenship: '', profilePicture: '' });
+  const [documentsLoading, setDocumentsLoading] = useState(false);
+
+  const fetchMe = useCallback(async () => {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const { data } = await axios.get<{ success?: boolean; verify?: boolean; citizenship?: string; profilePicture?: string }>('/api/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data.success) {
+        setUserVerify(data.verify ?? false);
+        setUserDocumentsForm({
+          citizenship: data.citizenship ?? '',
+          profilePicture: data.profilePicture ?? '',
+        });
+      }
+    } catch {
+      setUserVerify(null);
+    }
+  }, []);
 
   const fetchDoctors = useCallback(async () => {
     setLoadingDoctors(true);
@@ -107,10 +130,35 @@ export default function UserDashboardPage() {
       router.replace('/login');
       return;
     }
+    fetchMe();
     fetchDoctors();
     fetchMembers();
     fetchAppointments();
-  }, [router, fetchDoctors, fetchMembers, fetchAppointments]);
+  }, [router, fetchMe, fetchDoctors, fetchMembers, fetchAppointments]);
+
+  const handleSubmitDocuments = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = getToken();
+    if (!token) return;
+    setDocumentsLoading(true);
+    try {
+      const { data } = await axios.patch<{ success?: boolean; message?: string }>(
+        '/api/me/documents',
+        {
+          citizenship: userDocumentsForm.citizenship.trim(),
+          profilePicture: userDocumentsForm.profilePicture.trim(),
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(data?.message ?? 'Documents submitted for verification');
+      fetchMe();
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) && err.response?.data?.message ? String(err.response.data.message) : 'Failed to submit documents';
+      toast.error(msg);
+    } finally {
+      setDocumentsLoading(false);
+    }
+  };
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,19 +166,19 @@ export default function UserDashboardPage() {
     if (!token) return;
     setAddMemberLoading(true);
     try {
-      await axios.post(
+      const { data } = await axios.post<{ success?: boolean; message?: string }>(
         '/api/members',
         {
           name: addMemberForm.name,
           gender: addMemberForm.gender,
           age: Number(addMemberForm.age),
-          profilePicture: addMemberForm.profilePicture || 'https://api.dicebear.com/7.x/avataaars/svg?seed=member',
+          profilePicture: addMemberForm.profilePicture.trim(),
+          citizenship: addMemberForm.citizenship.trim(),
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Family member added');
-      setAddMemberForm({ name: '', gender: '', age: '', profilePicture: '' });
-      fetchMembers();
+      toast.success(data?.message ?? 'Sent for approval');
+      setAddMemberForm({ name: '', gender: '', age: '', profilePicture: '', citizenship: '' });
     } catch (err: unknown) {
       const msg = axios.isAxiosError(err) && err.response?.data?.message ? String(err.response.data.message) : 'Failed to add member';
       toast.error(msg);
@@ -174,79 +222,128 @@ export default function UserDashboardPage() {
         </header>
 
         <div className="space-y-8 mb-8 grid grid-cols-2">
-          {/* Add family member */}
+          {/* Documents & family: your verification + add family member */}
           <Card className="shadow-none border-none">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-2xl font-medium text-primary">
-                <UserPlus className="w-7 h-7 text-primary" />
-                Add family member
+                <FileCheck className="w-7 h-7 text-primary" />
+                Documents & family
               </CardTitle>
-              <CardDescription>Add a family member to report problems on their behalf.</CardDescription>
+              <CardDescription>Submit your documents for verification, then add family members (each with their documents) for approval.</CardDescription>
             </CardHeader>
 
-            <CardContent>
-              <form onSubmit={handleAddMember} className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
+            <CardContent className="space-y-8">
+              {/* Your verification documents */}
+              <div className={`space-y-4 ${userVerify === true ? "opacity-50" : ""}`}>
+                <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                  Your verification
+                  {userVerify === true && <span className="text-xs font-normal text-green-600">Verified</span>}
+                  {userVerify === false && <span className="text-xs font-normal text-amber-600">Pending</span>}
+                </h3>
+                <form onSubmit={handleSubmitDocuments} className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Name</label>
+                    <label className="text-sm font-medium text-foreground">Profile picture URL</label>
                     <Input
-                      value={addMemberForm.name}
-                      onChange={(e) => setAddMemberForm((p) => ({ ...p, name: e.target.value }))}
-                      placeholder="Full name"
+                      value={userDocumentsForm.profilePicture}
+                      onChange={(e) => setUserDocumentsForm((p) => ({ ...p, profilePicture: e.target.value }))}
+                      placeholder="https://..."
                       required
                       className="h-12"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Age</label>
+                    <label className="text-sm font-medium text-foreground">Citizenship document URL</label>
                     <Input
-                      type="text"
-                      inputMode="numeric"
-                      value={addMemberForm.age}
-                      onChange={(e) => setAddMemberForm((p) => ({ ...p, age: e.target.value }))}
-                      placeholder="Age"
+                      value={userDocumentsForm.citizenship}
+                      onChange={(e) => setUserDocumentsForm((p) => ({ ...p, citizenship: e.target.value }))}
+                      placeholder="https://..."
                       required
                       className="h-12"
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Gender</label>
-                  <Select
-                    value={addMemberForm.gender}
-                    onValueChange={(v) => setAddMemberForm((p) => ({ ...p, gender: v }))}
-                    required
-                  >
-                    <SelectTrigger className="py-6 w-full">
-                      <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Profile picture URL (optional)</label>
-                  <Input
-                    value={addMemberForm.profilePicture}
-                    onChange={(e) => setAddMemberForm((p) => ({ ...p, profilePicture: e.target.value }))}
-                    placeholder="https://..."
-                    className="h-12"
-                  />
-                </div>
-                <Button type="submit" disabled={addMemberLoading} className="w-full sm:w-auto py-6">
-                  {addMemberLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Adding...
-                    </>
-                  ) : (
-                    'Add member'
-                  )}
-                </Button>
-              </form>
+                  <Button type="submit" disabled={documentsLoading} className="w-full sm:w-auto py-6">
+                    {documentsLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</> : 'Submit for verification'}
+                  </Button>
+                </form>
+              </div>
+
+              {/* Add family member — only when verified */}
+              <div className="space-y-4 pt-4 border-t border-border">
+                <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-primary" />
+                  Add family member
+                </h3>
+                {userVerify !== true ? (
+                  <p className="text-sm text-muted-foreground">Submit your documents above and get verified first. Then you can add family members (each will need their documents and admin approval).</p>
+                ) : (
+                  <form onSubmit={handleAddMember} className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">Name</label>
+                        <Input
+                          value={addMemberForm.name}
+                          onChange={(e) => setAddMemberForm((p) => ({ ...p, name: e.target.value }))}
+                          placeholder="Full name"
+                          required
+                          className="h-12"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">Age</label>
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          value={addMemberForm.age}
+                          onChange={(e) => setAddMemberForm((p) => ({ ...p, age: e.target.value }))}
+                          placeholder="Age"
+                          required
+                          className="h-12"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Gender</label>
+                      <Select
+                        value={addMemberForm.gender}
+                        onValueChange={(v) => setAddMemberForm((p) => ({ ...p, gender: v }))}
+                        required
+                      >
+                        <SelectTrigger className="py-6 w-full">
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Profile picture URL</label>
+                      <Input
+                        value={addMemberForm.profilePicture}
+                        onChange={(e) => setAddMemberForm((p) => ({ ...p, profilePicture: e.target.value }))}
+                        placeholder="https://..."
+                        required
+                        className="h-12"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Citizenship document URL</label>
+                      <Input
+                        value={addMemberForm.citizenship}
+                        onChange={(e) => setAddMemberForm((p) => ({ ...p, citizenship: e.target.value }))}
+                        placeholder="https://..."
+                        required
+                        className="h-12"
+                      />
+                    </div>
+                    <Button type="submit" disabled={addMemberLoading} className="w-full sm:w-auto py-6">
+                      {addMemberLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Adding…</> : 'Add member (sent for approval)'}
+                    </Button>
+                  </form>
+                )}
+              </div>
             </CardContent>
           </Card>
 

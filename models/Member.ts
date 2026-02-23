@@ -1,7 +1,12 @@
-import { UserType } from "@/types/user";
+import type { Member } from "@/types/member";
 import mongoose, { Schema } from "mongoose";
 
-const MemberSchema = new Schema<UserType>({
+const MemberSchema = new Schema<Member>({
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    },
     name: {
         type: String,
         required: true,
