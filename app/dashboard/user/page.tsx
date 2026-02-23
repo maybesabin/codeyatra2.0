@@ -18,13 +18,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useState, useEffect, useCallback } from 'react';
-import { UserPlus, Stethoscope, User, Loader2 } from 'lucide-react';
+import { UserPlus, Stethoscope, User, Loader2, CalendarDays } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { toast } from 'sonner';
 
 type Doctor = { id: string; name: string; profilePicture?: string };
 type FamilyMember = { id: string; name: string; gender: string; age: number; profilePicture: string; problem?: string };
+type AppointmentItem = { id: string; doctorName: string; problem: string; date: string; status: 'pending' | 'completed' | 'cancelled'; forName: string; cancellationMessage?: string };
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -51,6 +52,8 @@ export default function UserDashboardPage() {
     date: '',
   });
   const [reportLoading, setReportLoading] = useState(false);
+  const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(true);
 
   const fetchDoctors = useCallback(async () => {
     setLoadingDoctors(true);
@@ -81,6 +84,23 @@ export default function UserDashboardPage() {
     }
   }, []);
 
+  const fetchAppointments = useCallback(async () => {
+    const token = getToken();
+    if (!token) return;
+    setLoadingAppointments(true);
+    try {
+      const { data } = await axios.get<{ success: boolean; appointments: AppointmentItem[] }>('/api/user/appointments', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data.success && data.appointments) setAppointments(data.appointments);
+      else setAppointments([]);
+    } catch {
+      setAppointments([]);
+    } finally {
+      setLoadingAppointments(false);
+    }
+  }, []);
+
   useEffect(() => {
     const token = getToken();
     if (!token) {
@@ -89,7 +109,8 @@ export default function UserDashboardPage() {
     }
     fetchDoctors();
     fetchMembers();
-  }, [router, fetchDoctors, fetchMembers]);
+    fetchAppointments();
+  }, [router, fetchDoctors, fetchMembers, fetchAppointments]);
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,6 +156,7 @@ export default function UserDashboardPage() {
       });
       toast.success('Appointment requested');
       setReportForm((prev) => ({ ...prev, problem: '', date: '', doctorId: '' }));
+      fetchAppointments();
     } catch (err: unknown) {
       const msg = axios.isAxiosError(err) && err.response?.data?.message ? String(err.response.data.message) : 'Failed to submit';
       toast.error(msg);
@@ -151,7 +173,7 @@ export default function UserDashboardPage() {
           <p className="text-sm text-muted-foreground mt-1">Manage family and report health issues</p>
         </header>
 
-        <div className="space-y-8">
+        <div className="space-y-8 mb-8 grid grid-cols-2">
           {/* Add family member */}
           <Card className="shadow-none border-none">
             <CardHeader>
@@ -328,7 +350,66 @@ export default function UserDashboardPage() {
               </form>
             </CardContent>
           </Card>
+
         </div>
+        {/* My appointments */}
+        <Card className="shadow-none border-none">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-2xl font-medium text-primary">
+              <CalendarDays className="w-7 h-7 text-primary" />
+              My appointments
+            </CardTitle>
+            <CardDescription>Your appointment requests. Status updates when the doctor approves or cancels.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingAppointments ? (
+              <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span>Loading appointments…</span>
+              </div>
+            ) : appointments.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">No appointments yet. Request one above.</p>
+            ) : (
+              <div className="space-y-4">
+                {appointments.map((appt) => (
+                  <div
+                    key={appt.id}
+                    className="rounded-xl border border-border bg-card p-4 text-card-foreground"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <p className="font-medium text-foreground">{appt.doctorName}</p>
+                        <p className="text-sm text-muted-foreground">For: {appt.forName}</p>
+                        <p className="text-sm text-muted-foreground">{appt.problem}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(appt.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {' · '}
+                          {new Date(appt.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        {appt.status === 'cancelled' && appt.cancellationMessage && (
+                          <p className="text-sm text-muted-foreground mt-2 pt-2 border-t border-border italic">
+                            Message from doctor: {appt.cancellationMessage}
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${appt.status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : appt.status === 'completed'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-red-100 text-red-700'
+                          }`}
+                      >
+                        {appt.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
       </div>
     </div>
   );

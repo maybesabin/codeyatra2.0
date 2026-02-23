@@ -87,6 +87,62 @@ const DetailModal = ({
   );
 };
 
+const CancelAppointmentModal = ({
+  onConfirm,
+  onClose,
+  message,
+  onMessageChange,
+  loading,
+}: {
+  onConfirm: () => void;
+  onClose: () => void;
+  message: string;
+  onMessageChange: (v: string) => void;
+  loading: boolean;
+}) => {
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl p-6 w-[360px] max-w-[90vw]">
+        <h2 className="font-semibold text-lg mb-1">Cancel appointment</h2>
+        <p className="text-sm text-stone-500 mb-3">
+          Optionally add a short message for the patient (e.g. reason or alternative).
+        </p>
+        <textarea
+          value={message}
+          onChange={(e) => onMessageChange(e.target.value)}
+          placeholder="e.g. Schedule conflict, please book another slot."
+          className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary h-20"
+          maxLength={500}
+        />
+        <div className="flex gap-2 mt-4 justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-1.5 rounded-lg border border-stone-200 text-stone-600 hover:bg-stone-50"
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading}
+            className="px-3 py-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 font-medium"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
+                Cancelling…
+              </>
+            ) : (
+              "Cancel appointment"
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function DoctorDashboard() {
   const router = useRouter();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -101,6 +157,8 @@ export default function DoctorDashboard() {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Appointment | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [cancelModal, setCancelModal] = useState<{ apptId: string } | null>(null);
+  const [cancelMessage, setCancelMessage] = useState("");
 
   const fetchAppointments = useCallback(async () => {
     const token = getToken();
@@ -134,17 +192,25 @@ export default function DoctorDashboard() {
     fetchAppointments();
   }, [fetchAppointments]);
 
-  const handleStatusUpdate = async (apptId: string, newStatus: "completed" | "cancelled") => {
+  const handleStatusUpdate = async (
+    apptId: string,
+    newStatus: "completed" | "cancelled",
+    message?: string
+  ) => {
     const token = getToken();
     if (!token) return;
     setUpdatingId(apptId);
     try {
+      const body: { status: string; message?: string } = { status: newStatus };
+      if (newStatus === "cancelled" && message?.trim()) body.message = message.trim();
       await axios.patch(
         `/api/doctor/appointments/${apptId}`,
-        { status: newStatus },
+        body,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success(newStatus === "completed" ? "Appointment approved" : "Appointment cancelled");
+      setCancelModal(null);
+      setCancelMessage("");
       fetchAppointments();
     } catch (err) {
       const msg = axios.isAxiosError(err) && err.response?.data?.message
@@ -154,6 +220,16 @@ export default function DoctorDashboard() {
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  const handleCancelClick = (apptId: string) => {
+    setCancelMessage("");
+    setCancelModal({ apptId });
+  };
+
+  const handleCancelConfirm = () => {
+    if (!cancelModal) return;
+    handleStatusUpdate(cancelModal.apptId, "cancelled", cancelMessage);
   };
 
   const filtered = appointments.filter((a) => {
@@ -296,7 +372,7 @@ export default function DoctorDashboard() {
                         <button
                           type="button"
                           disabled={updatingId === appt.id}
-                          onClick={() => handleStatusUpdate(appt.id, "cancelled")}
+                          onClick={() => handleCancelClick(appt.id)}
                           className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50"
                         >
                           <X className="w-3 h-3" />
@@ -316,6 +392,19 @@ export default function DoctorDashboard() {
 
       {selected && (
         <DetailModal appt={selected} onClose={() => setSelected(null)} />
+      )}
+
+      {cancelModal && (
+        <CancelAppointmentModal
+          message={cancelMessage}
+          onMessageChange={setCancelMessage}
+          onConfirm={handleCancelConfirm}
+          onClose={() => {
+            setCancelModal(null);
+            setCancelMessage("");
+          }}
+          loading={updatingId === cancelModal.apptId}
+        />
       )}
     </div>
   );

@@ -43,7 +43,7 @@ export async function PATCH(
         }
 
         const body = await req.json();
-        const { status } = body;
+        const { status, message } = body;
         if (!status || !ALLOWED_STATUSES.includes(status)) {
             return errorResponse("Valid status required: pending, completed, or cancelled");
         }
@@ -66,6 +66,9 @@ export async function PATCH(
         }
 
         appointment.status = status;
+        if (status === "cancelled" && typeof message === "string" && message.trim()) {
+            appointment.cancellationMessage = message.trim().slice(0, 500);
+        }
         await appointment.save();
 
         return NextResponse.json(
