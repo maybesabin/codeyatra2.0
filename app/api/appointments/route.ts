@@ -1,4 +1,5 @@
 import Appointment from "@/models/Appointment";
+import { inferAppointmentPriority } from "@/utils/gemini";
 import Doctor from "@/models/Doctor";
 import User from "@/models/User";
 import connectToDb from "@/utils/db";
@@ -82,6 +83,8 @@ export async function POST(req: NextRequest) {
             return errorResponse("Doctor is not verified yet");
         }
 
+        const priority = await inferAppointmentPriority(String(problem).trim());
+
         const appointment = new Appointment({
             doctor: doctorId,
             user: userId,
@@ -89,6 +92,7 @@ export async function POST(req: NextRequest) {
             problem,
             date: appointmentDate,
             status: "pending",
+            priority,
         });
         await appointment.save();
 
@@ -110,6 +114,7 @@ export async function POST(req: NextRequest) {
                     problem: appointment.problem,
                     date: appointment.date,
                     status: appointment.status,
+                    priority: appointment.priority,
                 },
             },
             { status: 201 }

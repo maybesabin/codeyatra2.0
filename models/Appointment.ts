@@ -34,6 +34,11 @@ const AppointmentSchema = new Schema<AppointmentType>({
         type: String,
         required: false,
     },
+    priority: {
+        type: String,
+        enum: ["low", "moderate", "high"],
+        required: false,
+    },
 }, {
     timestamps: true,
 });

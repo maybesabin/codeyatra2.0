@@ -78,6 +78,7 @@ export async function GET(req: NextRequest) {
                 bookedOn: (a as { createdAt?: string }).createdAt ?? a.date,
                 date: a.date,
                 status: a.status,
+                priority: (a as { priority?: string }).priority,
                 avatar: displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "?",
                 memberId: m?._id,
                 userId: u?._id,

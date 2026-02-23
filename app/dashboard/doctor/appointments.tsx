@@ -62,9 +62,9 @@ const Appointments = () => {
 
   return (
     <div className="p-6 w-full">
-      <header className="my-6">
+      <header className="mt-6 mb-2">
         <h1 className="text-4xl text-primary font-semibold">Appointments</h1>
-        <p className="text-sm text-stone-400">
+        <p className="text-sm mt-1 text-stone-400">
           {new Date().toLocaleDateString("en-IN", {
             weekday: "long",
             day: "numeric",
@@ -79,11 +79,11 @@ const Appointments = () => {
           <span>Loading…</span>
         </div>
       ) : (
-        <div className="flex flex-wrap w-full gap-4">
+        <div className="grid lg:grid-cols-4 md:grid-cols-2 w-full gap-4">
           {entries.map(({ key, label }) => (
             <div
               key={key}
-              className="p-6 flex-1 min-w-[140px] ring ring-neutral-300 shadow-md rounded-xl"
+              className="p-6 flex-1 w-full ring ring-neutral-300 shadow-md rounded-xl"
             >
               <p className="text-sm text-neutral-500">{label}</p>
               <p className="font-semibold text-primary text-2xl">{counts[key]}</p>

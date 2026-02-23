@@ -66,6 +66,7 @@ export async function GET(req: NextRequest) {
                 problem: a.problem,
                 date: a.date,
                 status: a.status,
+                priority: (a as { priority?: string }).priority,
                 forName,
                 createdAt: (a as { createdAt?: string }).createdAt,
                 cancellationMessage: (a as { cancellationMessage?: string }).cancellationMessage,

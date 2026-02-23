@@ -107,7 +107,7 @@ const Navbar = () => {
                     aria-haspopup="true"
                   >
                     <span
-                      className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden shrink-0 hover:opacity-90"
+                      className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden shrink-0 hover:opacity-90"
                       title={capitalizeFirst(user.name)}
                     >
                       {user.profilePicture ? (
@@ -207,14 +207,14 @@ const Navbar = () => {
 
       <div
         className={`md:hidden overflow-hidden transition-all duration-300 ${isOpen ? "max-h-60 opacity-100" : "max-h-0 opacity-0"
-          } bg-primary/50`}
+          }`}
       >
         <div className="px-4 py-4 space-y-3">
           {authChecked &&
             (user ? (
               <>
                 <div className="flex items-center gap-2 py-2 border-b border-border/50">
-                  <span className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden shrink-0">
+                  <span className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden shrink-0">
                     {user.profilePicture ? (
                       <img
                         src={user.profilePicture}

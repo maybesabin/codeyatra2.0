@@ -221,7 +221,7 @@ export default function UserDashboardPage() {
           <p className="text-sm text-muted-foreground mt-1">Manage family and report health issues</p>
         </header>
 
-        <div className="space-y-8 mb-8 grid grid-cols-2">
+        <div className="space-y-8 mb-8 grid lg:grid-cols-2">
           {/* Documents & family: your verification + add family member */}
           <Card className="shadow-none border-none">
             <CardHeader>

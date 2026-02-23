@@ -8,6 +8,8 @@ import { toast } from "sonner";
 
 type Status = "pending" | "completed" | "cancelled";
 
+type Priority = "low" | "moderate" | "high";
+
 interface Appointment {
   id: string;
   user: string;
@@ -17,6 +19,7 @@ interface Appointment {
   bookedOn: string;
   date: string;
   status: Status;
+  priority?: Priority;
   avatar: string;
 }
 
@@ -63,6 +66,20 @@ const Badge = ({ status }: { status: Status }) => {
   );
 };
 
+const PriorityBadge = ({ priority }: { priority?: Priority }) => {
+  if (!priority) return <span className="text-stone-400 text-xs">—</span>;
+  const map: Record<Priority, string> = {
+    low: "bg-stone-100 text-stone-700",
+    moderate: "bg-amber-100 text-amber-700",
+    high: "bg-red-100 text-red-700",
+  };
+  return (
+    <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${map[priority]}`}>
+      {priority}
+    </span>
+  );
+};
+
 const DetailModal = ({
   appt,
   onClose,
@@ -74,8 +91,12 @@ const DetailModal = ({
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl p-6 w-96">
         <h2 className="font-semibold text-lg mb-2">{appt.user}</h2>
-        <p>{appt.problem}</p>
-
+        <p className="text-stone-600 mb-2">{appt.problem}</p>
+        {appt.priority && (
+          <p className="text-sm text-stone-500 mb-3">
+            Priority: <PriorityBadge priority={appt.priority} />
+          </p>
+        )}
         <button
           onClick={onClose}
           className="mt-4 px-3 py-1 bg-primary text-white rounded-lg"
@@ -248,9 +269,9 @@ export default function DoctorDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 font-sans p-6">
-      <header className="mb-6">
-        <h1 className="text-2xl font-semibold">Patients</h1>
+    <div className="bg-stone-50 font-sans p-6">
+      <header className="mb-2">
+        <h1 className="text-4xl text-primary font-semibold">Patients</h1>
       </header>
 
       {/* Controls */}
@@ -268,11 +289,10 @@ export default function DoctorDashboard() {
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className={`px-3 py-1.5 cursor-pointer rounded-lg text-xs font-medium transition capitalize ${
-                filter === s
-                  ? "bg-primary text-white  shadow-sm"
-                  : "text-stone-500 hover:text-stone-700"
-              }`}
+              className={`px-3 py-1.5 cursor-pointer rounded-lg text-xs font-medium transition capitalize ${filter === s
+                ? "bg-primary text-white  shadow-sm"
+                : "text-stone-500 hover:text-stone-700"
+                }`}
             >
               {s === "all"
                 ? `All (${displayCounts.all})`
@@ -301,6 +321,7 @@ export default function DoctorDashboard() {
                 <th className="px-5 py-3 text-left">Condition</th>
                 <th className="px-5 py-3 text-left">Booked On</th>
                 <th className="px-5 py-3 text-left">Scheduled For</th>
+                <th className="px-5 py-3 text-left">Priority</th>
                 <th className="px-5 py-3 text-left">Status</th>
                 <th className="px-5 py-3 text-left">Action</th>
               </tr>
@@ -348,6 +369,9 @@ export default function DoctorDashboard() {
                     <p className="text-stone-400 text-xs">
                       {fmtTime(appt.date)}
                     </p>
+                  </td>
+                  <td className="px-5 py-4">
+                    <PriorityBadge priority={appt.priority} />
                   </td>
                   <td className="px-5 py-4">
                     <Badge status={appt.status} />
