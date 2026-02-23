@@ -10,6 +10,7 @@ export interface AppointmentType {
     problem: string;
     date: Date;
     status: AppointmentStatus;
+    cancellationMessage?: string;
 }
 
 export type Appointment = AppointmentType;

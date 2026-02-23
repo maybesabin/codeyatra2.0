@@ -30,6 +30,10 @@ const AppointmentSchema = new Schema<AppointmentType>({
         enum: ["pending", "completed", "cancelled"],
         default: "pending",
     },
+    cancellationMessage: {
+        type: String,
+        required: false,
+    },
 }, {
     timestamps: true,
 });
