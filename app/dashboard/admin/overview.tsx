@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -14,9 +14,9 @@ const Appointments = () => {
   const router = useRouter();
   const [counts, setCounts] = useState({
     Total: 0,
-    Pending: 0,
-    Completed: 0,
-    Cancelled: 0,
+    Verified: 0,
+    Doctors: 0,
+    Users: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -30,34 +30,39 @@ const Appointments = () => {
     try {
       const { data } = await axios.get<{
         success: boolean;
-        counts: { total: number; pending: number; completed: number; cancelled: number };
+        counts: {
+          total: number;
+          Verified: number;
+          Doctors: number;
+          Users: number;
+        };
       }>("/api/doctor/appointments", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (data.success && data.counts) {
         setCounts({
           Total: data.counts.total,
-          Pending: data.counts.pending,
-          Completed: data.counts.completed,
-          Cancelled: data.counts.cancelled,
+          Verified: data.counts.Verified,
+          Doctors: data.counts.Doctors,
+          Users: data.counts.Users,
         });
       }
     } catch {
-      setCounts({ Total: 0, Pending: 0, Completed: 0, Cancelled: 0 });
+      setCounts({ Total: 0, Verified: 0, Doctors: 0, Users: 0 });
     } finally {
       setLoading(false);
     }
   }, [router]);
 
-  useEffect(() => {
-    fetchCounts();
-  }, [fetchCounts]);
+  // useEffect(() => {
+  //   fetchCounts();
+  // }, [fetchCounts]);
 
   const entries = [
     { key: "Total" as const, label: "Total" },
-    { key: "Pending" as const, label: "Pending" },
-    { key: "Completed" as const, label: "Completed" },
-    { key: "Cancelled" as const, label: "Cancelled" },
+    { key: "Verified" as const, label: "Verified" },
+    { key: "Doctors" as const, label: "Doctors" },
+    { key: "Users" as const, label: "Users" },
   ];
 
   return (
@@ -86,7 +91,9 @@ const Appointments = () => {
               className="p-6 flex-1 min-w-[140px] ring ring-neutral-300 shadow-md rounded-xl"
             >
               <p className="text-sm text-neutral-500">{label}</p>
-              <p className="font-semibold text-primary text-2xl">{counts[key]}</p>
+              <p className="font-semibold text-primary text-2xl">
+                {counts[key]}
+              </p>
               <p className="text-sm text-neutral-500">{label} appointments</p>
             </div>
           ))}

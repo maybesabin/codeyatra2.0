@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import Appointments from "./appointments";
-import Patients from "./pateients";
+import Patients from "./users";
+import Appointments from "./overview";
+
 const page = () => {
   return (
     <>
