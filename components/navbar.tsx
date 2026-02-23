@@ -133,7 +133,7 @@ const Navbar = () => {
                       <span className="font-medium text-foreground max-w-[120px] truncate">
                         {capitalizeFirst(user.name)}
                       </span>
-                      {user.role === "user" && (
+                      {(user.role === "user" || user.role === "doctor") && (
                         <span className={`-mt-1 text-xs ${user.verify ? "text-green-600" : "text-red-600"}`}>
                           {user.verify ? "verified" : "not verified"}
                         </span>
@@ -235,7 +235,7 @@ const Navbar = () => {
                   </span>
                   <div className="flex flex-col">
                     <span className="font-medium text-foreground">{capitalizeFirst(user.name)}</span>
-                    {user.role === "user" && (
+                    {(user.role === "user" || user.role === "doctor") && (
                       <span className={`text-xs ${user.verify ? "text-green-600" : "text-red-600"}`}>
                         {user.verify ? "verified" : "not verified"}
                       </span>

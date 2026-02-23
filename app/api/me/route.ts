@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     await connectToDb();
     if (decoded.role === "doctor") {
       const doctor = await Doctor.findById(decoded.id)
-        .select("name profilePicture")
+        .select("name profilePicture verify citizenship license")
         .lean();
       if (!doctor) {
         return NextResponse.json(
@@ -50,11 +50,15 @@ export async function GET(req: NextRequest) {
           { status: 404 }
         );
       }
+      const d = doctor as { name?: string; profilePicture?: string; verify?: boolean; citizenship?: string; license?: string };
       return NextResponse.json({
         success: true,
-        name: doctor.name,
-        profilePicture: doctor.profilePicture ?? "",
+        name: d.name,
+        profilePicture: d.profilePicture ?? "",
         role: "doctor",
+        verify: d.verify ?? false,
+        citizenship: d.citizenship ?? "",
+        license: d.license ?? "",
       });
     }
     const user = await User.findById(decoded.id)

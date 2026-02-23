@@ -494,8 +494,8 @@ export default function UserDashboardPage() {
               </form>
             </CardContent>
           </Card>
-
         </div>
+
         {/* My appointments */}
         <Card className="shadow-none border-none">
           <CardHeader>
