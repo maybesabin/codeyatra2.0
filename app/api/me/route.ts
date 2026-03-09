@@ -1,0 +1,85 @@
+import Doctor from "@/models/Doctor";
+import User from "@/models/User";
+import connectToDb from "@/utils/db";
+import { handleError } from "@/utils/error";
+import jwt from "jsonwebtoken";
+import { NextRequest, NextResponse } from "next/server";
+
+function getDecodedFromToken(req: NextRequest): { id: string; role: string } | null {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  const token = authHeader.slice(7);
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      id: string;
+      email: string;
+      role?: string;
+    };
+    const role = decoded.role === "doctor" ? "doctor" : decoded.role === "admin" ? "admin" : "user";
+    return { id: decoded.id, role };
+  } catch {
+    return null;
+  }
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const decoded = getDecodedFromToken(req);
+    if (!decoded) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized." },
+        { status: 401 }
+      );
+    }
+    if (decoded.role === "admin") {
+      return NextResponse.json({
+        success: true,
+        name: "Admin",
+        profilePicture: "",
+        role: "admin",
+      });
+    }
+    await connectToDb();
+    if (decoded.role === "doctor") {
+      const doctor = await Doctor.findById(decoded.id)
+        .select("name profilePicture verify citizenship license")
+        .lean();
+      if (!doctor) {
+        return NextResponse.json(
+          { success: false, message: "Doctor not found" },
+          { status: 404 }
+        );
+      }
+      const d = doctor as { name?: string; profilePicture?: string; verify?: boolean; citizenship?: string; license?: string };
+      return NextResponse.json({
+        success: true,
+        name: d.name,
+        profilePicture: d.profilePicture ?? "",
+        role: "doctor",
+        verify: d.verify ?? false,
+        citizenship: d.citizenship ?? "",
+        license: d.license ?? "",
+      });
+    }
+    const user = await User.findById(decoded.id)
+      .select("name profilePicture verify citizenship")
+      .lean();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      );
+    }
+    const u = user as { name?: string; profilePicture?: string; verify?: boolean; citizenship?: string };
+    return NextResponse.json({
+      success: true,
+      name: u.name,
+      profilePicture: u.profilePicture ?? "",
+      role: "user",
+      verify: u.verify ?? false,
+      citizenship: u.citizenship ?? "",
+    });
+  } catch (err) {
+    return handleError(err);
+  }
+}

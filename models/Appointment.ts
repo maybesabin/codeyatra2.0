@@ -12,6 +12,11 @@ const AppointmentSchema = new Schema<AppointmentType>({
         ref: "User",
         required: true,
     },
+    member: {
+        type: Schema.Types.ObjectId,
+        ref: "Member",
+        required: false,
+    },
     problem: {
         type: String,
         required: true,
@@ -24,6 +29,27 @@ const AppointmentSchema = new Schema<AppointmentType>({
         type: String,
         enum: ["pending", "completed", "cancelled"],
         default: "pending",
+    },
+    cancellationMessage: {
+        type: String,
+        required: false,
+    },
+    priority: {
+        type: String,
+        enum: ["low", "moderate", "high"],
+        required: false,
+    },
+    startTime: {
+        type: String,
+        required: false,
+    },
+    endTime: {
+        type: String,
+        required: false,
+    },
+    meetingLink: {
+        type: String,
+        required: false,
     },
 }, {
     timestamps: true,

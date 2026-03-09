@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { doctorId, problem, date } = body;
+        const { doctorId, problem, date, memberId, priority } = body;
 
         if (!doctorId || !problem || !date) {
             return errorResponse("Missing required fields: doctorId, problem, date");
@@ -57,6 +57,20 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        if (!user.verify) {
+            return NextResponse.json(
+                { success: false, message: "Your account must be verified to request appointments. Submit your documents first." },
+                { status: 403 }
+            );
+        }
+
+        if (memberId) {
+            const memberIds = (user.member ?? []).map((id) => String(id));
+            if (!memberIds.includes(String(memberId))) {
+                return errorResponse("Invalid family member");
+            }
+        }
+
         const doctor = await Doctor.findById(doctorId);
         if (!doctor) {
             return errorResponse("Doctor not found");
@@ -68,12 +82,17 @@ export async function POST(req: NextRequest) {
             return errorResponse("Doctor is not verified yet");
         }
 
+        const validPriorities = ["low", "moderate", "high"];
+        const resolvedPriority = validPriorities.includes(priority) ? priority : "moderate";
+
         const appointment = new Appointment({
             doctor: doctorId,
             user: userId,
+            ...(memberId && { member: memberId }),
             problem,
             date: appointmentDate,
             status: "pending",
+            priority: resolvedPriority,
         });
         await appointment.save();
 
@@ -95,6 +114,7 @@ export async function POST(req: NextRequest) {
                     problem: appointment.problem,
                     date: appointment.date,
                     status: appointment.status,
+                    priority: appointment.priority,
                 },
             },
             { status: 201 }

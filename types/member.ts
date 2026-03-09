@@ -1,3 +1,5 @@
+import type { Schema } from "mongoose";
+
 export interface Member {
     name: string;
     gender: "male" | "female" | "other";
@@ -7,4 +9,5 @@ export interface Member {
     profilePicture: string;
     age: number;
     isAdmin: boolean;
+    user?: Schema.Types.ObjectId;
 }
